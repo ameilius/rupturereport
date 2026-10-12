@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import ShareButton from "@/components/ShareButton";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -112,6 +113,7 @@ async function PlayerContent({ params }: Props) {
   const { player, injuries, lastModified } = data;
   const { title, description } = describe(data);
   const url = `${siteUrl}/players/${player.slug}`;
+  const shareType = injuries[0] ? formatInjuryType(injuries[0].injuryType) : "Injury";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -195,12 +197,19 @@ async function PlayerContent({ params }: Props) {
           {[player.position, player.team?.name].filter(Boolean).join(" · ") ||
             "NFL"}
         </p>
-        {lastModified && (
-          <p className="mt-2 text-sm text-muted">
-            Last updated{" "}
-            <time dateTime={lastModified}>{formatDate(lastModified)}</time>
-          </p>
-        )}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+          {lastModified && (
+            <p className="text-sm text-muted">
+              Last updated{" "}
+              <time dateTime={lastModified}>{formatDate(lastModified)}</time>
+            </p>
+          )}
+          <ShareButton
+            url={url}
+            title={`${player.fullName} ${shareType} Recovery Tracker | Rupture Report`}
+            text={`${player.fullName}${player.team ? ` (${player.team.name})` : ""} — ${shareType} recovery tracker | Rupture Report`}
+          />
+        </div>
         </div>
       </header>
 

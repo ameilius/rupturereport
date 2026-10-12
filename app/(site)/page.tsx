@@ -1,6 +1,7 @@
 import { defaultOgImage } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
+import ShareButton from "@/components/ShareButton";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import InjuryTracker from "@/components/InjuryTracker";
@@ -91,7 +92,14 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <header>
-        <p className="text-xs font-semibold uppercase tracking-widest text-teal">2026 NFL Season</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-teal">2026 NFL Season</p>
+          <ShareButton
+            url={siteUrl}
+            title="NFL ACL & Achilles Injury Tracker 2026 | Rupture Report"
+            text="Every torn ACL and Achilles of the 2026 NFL season, with surface, game context and recovery status."
+          />
+        </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
           NFL ACL &amp; Achilles Injury Tracker
         </h1>
