@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { getPlayer, getPlayerInjuries, listTeams } from "@/lib/admin-db";
 import { PlayerForm } from "@/components/admin/forms";
+import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Card, Flash, Loading, btnCls, fmtDate, linkCls, type SP } from "@/components/admin/ui";
 
 type Props = { params: Promise<{ id: string }>; searchParams: SP };
@@ -58,6 +59,15 @@ async function Content({ params, searchParams }: Props) {
           </ul>
         )}
         <Link href={`/admin/injuries/new?player=${id}`} className={btnCls}>+ Add injury</Link>
+      </Card>
+      <Card title="Player photo">
+        <ImageUpload
+          kind="players"
+          id={id}
+          slug={String(player.slug)}
+          path={(player.headshot_path as string | null) ?? null}
+          label={`${String(player.first_name)} ${String(player.last_name)}`}
+        />
       </Card>
       <Card title="Player details">
         <PlayerForm player={player} teams={teams} />

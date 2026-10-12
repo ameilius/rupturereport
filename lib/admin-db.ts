@@ -128,3 +128,23 @@ export const getUpdates = (injuryId: number) =>
       ORDER BY update_date DESC, id DESC`,
     [injuryId],
   );
+
+/** Slug + current image path for a player or team (table/column come from a fixed whitelist). */
+export async function getImageRow(
+  table: "players" | "teams",
+  column: "headshot_path" | "logo_path",
+  id: number,
+) {
+  const sql =
+    table === "players"
+      ? `SELECT slug, headshot_path AS path FROM players WHERE id = ?`
+      : `SELECT slug, logo_path AS path FROM teams WHERE id = ?`;
+  void column;
+  return (await q<Row>(sql, [id]))[0] ?? null;
+}
+
+export const listTeamsFull = () =>
+  q<Row>(`SELECT id, abbreviation, name, slug, conference, division, logo_path FROM teams ORDER BY name`);
+
+export const getTeam = async (id: number) =>
+  (await q<Row>(`SELECT * FROM teams WHERE id = ?`, [id]))[0] ?? null;

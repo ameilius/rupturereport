@@ -18,6 +18,13 @@ CNF=$(mktemp); chmod 600 "$CNF"; trap 'rm -f "$CNF"' EXIT
 DB=$(envval DB_NAME)
 sql() { mariadb --defaults-file="$CNF" "$DB" "$@"; }
 
+echo "== Uploads dir (persistent, outside the repo)"
+UPLOADS_DIR=$(envval UPLOADS_DIR || true)
+UPLOADS_DIR=${UPLOADS_DIR:-/home/rupturereport/uploads}
+mkdir -p "$UPLOADS_DIR/players" "$UPLOADS_DIR/teams"
+chmod 755 "$UPLOADS_DIR" "$UPLOADS_DIR/players" "$UPLOADS_DIR/teams"
+echo "  $UPLOADS_DIR"
+
 echo "== Schema (idempotent)"
 sql < db/schema.sql
 

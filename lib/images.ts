@@ -8,9 +8,19 @@ export function officialImagesEnabled(): boolean {
   return process.env["NEXT_PUBLIC_USE_OFFICIAL_IMAGES"] !== "false";
 }
 
-/** Server-side: returns the stored path only when official images are enabled. */
+/** Custom admin uploads live under /media/ and are always shown, regardless of the kill switch. */
+export function isCustomUpload(path: string | null | undefined): boolean {
+  return !!path && path.startsWith("/media/");
+}
+
+/**
+ * Server-side image precedence: custom upload (always) → official image (only if enabled) → null
+ * (callers then render initials avatars / team badges).
+ */
 export function gated(path: string | null | undefined): string | null {
-  return officialImagesEnabled() ? path ?? null : null;
+  if (!path) return null;
+  if (isCustomUpload(path)) return path;
+  return officialImagesEnabled() ? path : null;
 }
 
 /** Team colours for fallback badges/avatars: [primary, secondary]. */

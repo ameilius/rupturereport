@@ -51,9 +51,6 @@ export function PlayerForm({ player, teams }: { player?: Row | null; teams: Row[
         <Field label="Weight (lb)" name="weight_lb">
           <Input name="weight_lb" type="number" min={100} max={450} defaultValue={v("weight_lb")} />
         </Field>
-        <Field label="Headshot path" name="headshot_path" hint="Local file under public/, e.g. /players/jane-doe.png. Leave blank for initials avatar.">
-          <Input name="headshot_path" maxLength={255} pattern="/[A-Za-z0-9/_.\-]+\.(png|jpg|jpeg|webp)" placeholder="/players/slug.png" defaultValue={v("headshot_path")} />
-        </Field>
       </div>
       <div className="flex gap-3">
         <button className={btnCls}>{player ? "Save player" : "Create player"}</button>

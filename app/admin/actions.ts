@@ -22,10 +22,14 @@ import {
   SURFACE_TYPES,
   exec,
   getInjury,
+  getImageRow,
   getPlayer,
   slugify,
   uniqueSlug,
 } from "@/lib/admin-db";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { deleteUpload, storeUpload } from "@/lib/uploads";
 
 // ---------- helpers ----------
 function str(fd: FormData, k: string, max = 255): string | null {
@@ -104,9 +108,6 @@ export async function savePlayerAction(fd: FormData) {
   const last = str(fd, "last_name", 64);
   const position = str(fd, "position", 4);
   if (!first || !last || !position) fail(back, "First name, last name and position are required");
-  const headshot = str(fd, "headshot_path", 255);
-  if (headshot && (!/^\/[A-Za-z0-9/_.-]+\.(png|jpe?g|webp)$/.test(headshot) || headshot.includes("..")))
-    fail(back, "Headshot path must be a local path like /players/slug.png");
   const fields = {
     first_name: first,
     last_name: last,
@@ -115,7 +116,6 @@ export async function savePlayerAction(fd: FormData) {
     dob: date(fd, "dob"),
     height_in: int(fd, "height_in"),
     weight_lb: int(fd, "weight_lb"),
-    headshot_path: headshot,
   };
   let slug: string;
   let oldSlug: string | null = null;
@@ -252,4 +252,59 @@ export async function deleteUpdateAction(fd: FormData) {
   await exec(`DELETE FROM progress_updates WHERE id = ? AND injury_id = ?`, [id, injuryId]);
   revalidatePublic(injury.player_slug as string);
   redirect(`/admin/injuries/${injuryId}?saved=1`);
+}
+
+// ---------- images (player headshots / team logos) ----------
+const IMAGE_TARGETS = {
+  players: { table: "players", column: "headshot_path", back: "/admin/players" },
+  teams: { table: "teams", column: "logo_path", back: "/admin/teams" },
+} as const;
+
+async function imageTarget(fd: FormData) {
+  await requireAdmin();
+  const kind = oneOf(fd, "kind", ["players", "teams"] as const);
+  const id = int(fd, "id");
+  if (!kind || !id) fail("/admin", "Invalid image request");
+  const t = IMAGE_TARGETS[kind];
+  const back = `${t.back}/${id}`;
+  const r = await getImageRow(t.table, t.column, id);
+  if (!r) fail(t.back, "Not found");
+  return { kind, id, t, back, slug: String(r.slug), current: (r.path as string | null) ?? null };
+}
+
+function revalidateImage(kind: "players" | "teams", slug: string) {
+  revalidatePublic(kind === "players" ? slug : null);
+  if (kind === "teams") revalidatePath("/players/[slug]", "page");
+  revalidatePath(`/admin/${kind}`, "layout");
+}
+
+export async function uploadImageAction(fd: FormData) {
+  const { kind, id, t, back, slug, current } = await imageTarget(fd);
+  const file = fd.get("image");
+  if (!(file instanceof File) || file.size === 0) fail(back, "Choose an image to upload");
+  let path: string;
+  try {
+    path = await storeUpload(kind, slug, file);
+  } catch (e) {
+    fail(back, e instanceof Error ? e.message : "Upload failed");
+  }
+  await exec(`UPDATE ${t.table} SET ${t.column} = ? WHERE id = ?`, [path, id]);
+  if (current !== path) await deleteUpload(current);
+  revalidateImage(kind, slug);
+  redirect(`${back}?saved=1`);
+}
+
+export async function removeImageAction(fd: FormData) {
+  const { kind, id, t, back, slug, current } = await imageTarget(fd);
+  const mode = str(fd, "mode") === "official" ? "official" : "none";
+  let next: string | null = null;
+  if (mode === "official") {
+    const official = `/${kind}/${slug}.png`;
+    if (!existsSync(join(process.cwd(), "public", official))) fail(back, "No official image on file");
+    next = official;
+  }
+  await exec(`UPDATE ${t.table} SET ${t.column} = ? WHERE id = ?`, [next, id]);
+  await deleteUpload(current);
+  revalidateImage(kind, slug);
+  redirect(`${back}?saved=1`);
 }

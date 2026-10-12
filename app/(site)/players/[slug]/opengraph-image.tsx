@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { connection } from "next/server";
-import { initials, localImage, teamColors } from "@/lib/images";
+import { initials, isCustomUpload, localImage, teamColors } from "@/lib/images";
+import { readUpload } from "@/lib/uploads";
 import { STAGE_LABELS, formatInjuryType, getPlayerBySlug } from "@/lib/players";
 
 export const alt = "Rupture Report player injury & recovery tracker";
@@ -52,7 +53,10 @@ export default async function Image({
     const p = localImage(publicPath);
     if (!p) return null;
     try {
-      const buf = await readFile(join(process.cwd(), "public", p));
+      const buf = isCustomUpload(p)
+        ? await readUpload(p)
+        : await readFile(join(process.cwd(), "public", p));
+      if (!buf) return null;
       return `data:image/png;base64,${buf.toString("base64")}`;
     } catch {
       return null;
