@@ -35,15 +35,40 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <Link href="/" className="flex items-center gap-3" aria-label="Rupture Report home">
-          <Image src="/brand/icon-white-64.png" alt="" width={64} height={64} className="h-6 w-auto" />
-          <span>Rupture Report · NFL ACL &amp; Achilles Injury Tracker</span>
-        </Link>
-        <p>© {2026} Rupture Report. Data from public team and league reports.</p>
-        <Link href="/contact" className="hover:text-teal">Contact</Link>
-        <p className="text-xs">Team logos and player images © their respective owners.</p>
+    <footer className="mt-20 border-t border-border bg-bg">
+      <div className="mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-6">
+        <div className="grid gap-10 md:grid-cols-[2fr_1fr_1.5fr] md:gap-12">
+          <div className="max-w-xs">
+            <Link href="/" aria-label="Rupture Report home" className="inline-flex items-center gap-3">
+              <Image src="/brand/icon-white-64.png" alt="" width={64} height={64} className="h-8 w-auto" />
+              <span className="font-semibold tracking-wide text-text">Rupture Report</span>
+            </Link>
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              Tracking every NFL ACL and Achilles tear of the 2026 season, from injury to return.
+            </p>
+          </div>
+          <nav aria-label="Footer">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Site</p>
+            <ul className="mt-4 space-y-3 text-sm">
+              <li><Link href="/" className="text-text hover:text-teal">Tracker</Link></li>
+              <li><Link href="/players" className="text-text hover:text-teal">Players</Link></li>
+              <li><Link href="/contact" className="text-text hover:text-teal">Contact</Link></li>
+            </ul>
+          </nav>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Get in touch</p>
+            <p className="mt-4 text-sm">
+              <Link href="/contact" className="text-teal hover:underline">contact<span>@</span>rupturereport.com</Link>
+            </p>
+            <p className="mt-4 text-xs leading-relaxed text-muted">
+              Team logos and player images © their respective owners.
+            </p>
+          </div>
+        </div>
+        <div className="mt-12 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>© 2026 Rupture Report</p>
+          <p>Data from public team and league reports.</p>
+        </div>
       </div>
     </footer>
   );
