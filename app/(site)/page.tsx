@@ -30,7 +30,20 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: "Rupture Report",
+      url: siteUrl,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/brand/logo-square-1024.png`,
+        width: 1024,
+        height: 1024,
+      },
+    },
+    {
       "@type": "WebSite",
+      publisher: { "@id": `${siteUrl}/#organization` },
       "@id": `${siteUrl}/#website`,
       url: siteUrl,
       name: "Rupture Report",
@@ -44,7 +57,7 @@ const jsonLd = {
       description:
         "Tracked torn ACL and Achilles injuries across the 2026 NFL offseason, preseason and regular season, including injury date, team, position, game context, playing surface, mechanism and recovery stage.",
       url: siteUrl,
-      creator: { "@type": "Organization", name: "Rupture Report", url: siteUrl },
+      creator: { "@id": `${siteUrl}/#organization` },
       temporalCoverage: "2026",
       spatialCoverage: "United States",
       keywords: [

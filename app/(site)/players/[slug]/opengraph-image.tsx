@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { connection } from "next/server";
 import { STAGE_LABELS, formatInjuryType, getPlayerBySlug } from "@/lib/players";
@@ -39,6 +41,14 @@ export default async function Image({
     // DB unavailable: fall back to slug-based card
   }
 
+  let iconSrc: string | null = null;
+  try {
+    const buf = await readFile(join(process.cwd(), "public/brand/icon-white-128.png"));
+    iconSrc = `data:image/png;base64,${buf.toString("base64")}`;
+  } catch {
+    // icon optional
+  }
+
   return new ImageResponse(
     (
       <div
@@ -55,14 +65,11 @@ export default async function Image({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              background: "#14B8A6",
-            }}
-          />
+          {iconSrc ? (
+            <img src={iconSrc} width={44} height={47} alt="" />
+          ) : (
+            <div style={{ width: 20, height: 20, borderRadius: 10, background: "#14B8A6" }} />
+          )}
           <div
             style={{
               fontSize: 30,
