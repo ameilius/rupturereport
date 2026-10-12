@@ -92,7 +92,7 @@ export const getStadium = async (id: number) =>
 
 export const searchPlayers = (term: string) =>
   q<Row>(
-    `SELECT p.id, p.first_name, p.last_name, p.slug, p.position, t.abbreviation team,
+    `SELECT p.id, p.first_name, p.last_name, p.slug, p.position, p.headshot_path, t.abbreviation team,
             (SELECT COUNT(*) FROM injuries i WHERE i.player_id = p.id) injury_count
        FROM players p LEFT JOIN teams t ON t.id = p.team_id
       WHERE ? = '' OR CONCAT(p.first_name, ' ', p.last_name) LIKE ? OR p.slug LIKE ?
@@ -116,8 +116,9 @@ export const getPlayerInjuries = (playerId: number) =>
 export const getInjury = async (id: number) =>
   (
     await q<Row>(
-      `SELECT i.*, p.first_name, p.last_name, p.slug player_slug
-         FROM injuries i JOIN players p ON p.id = i.player_id WHERE i.id = ?`,
+      `SELECT i.*, p.first_name, p.last_name, p.slug player_slug, p.headshot_path, t.abbreviation team_abbr
+         FROM injuries i JOIN players p ON p.id = i.player_id
+         LEFT JOIN teams t ON t.id = p.team_id WHERE i.id = ?`,
       [id],
     )
   )[0] ?? null;

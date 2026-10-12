@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PlayerAvatar } from "@/components/TeamImages";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
@@ -41,19 +42,31 @@ async function Content({ searchParams }: { searchParams: SP }) {
               <tr>
                 <th className="p-3">Name</th><th className="p-3">Pos</th>
                 <th className="p-3">Team</th><th className="p-3">Injuries</th>
+                <th className="p-3"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {players.map((p) => (
                 <tr key={String(p.id)}>
                   <td className="p-3">
-                    <Link href={`/admin/players/${p.id}`} className={linkCls}>
+                    <Link href={`/admin/players/${p.id}`} className={`${linkCls} inline-flex items-center gap-3`}>
+                      <PlayerAvatar
+                        name={`${String(p.first_name)} ${String(p.last_name)}`}
+                        team={(p.team as string | null) ?? null}
+                        headshotPath={(p.headshot_path as string | null) ?? null}
+                        size={32}
+                      />
                       {String(p.first_name)} {String(p.last_name)}
                     </Link>
                   </td>
                   <td className="p-3">{String(p.position ?? "")}</td>
                   <td className="p-3">{String(p.team ?? "")}</td>
                   <td className="p-3">{String(p.injury_count)}</td>
+                  <td className="p-3 text-right">
+                    <Link href={`/admin/players/${p.id}`} className={`${linkCls} whitespace-nowrap`}>
+                      Edit &amp; photo →
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

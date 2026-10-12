@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { STAGES, getInjury, getUpdates, listStadiums, listTeams } from "@/lib/admin-db";
 import { addUpdateAction, deleteInjuryAction, deleteUpdateAction } from "@/app/admin/actions";
 import { InjuryForm } from "@/components/admin/forms";
+import { PlayerAvatar } from "@/components/TeamImages";
 import {
   Card, Field, Flash, Input, Loading, Select, Textarea,
   btnCls, btnDangerCls, fmtDate, linkCls, type SP,
@@ -33,15 +34,31 @@ async function Content({ params, searchParams }: Props) {
   const today = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm text-muted">
-          <Link href={`/admin/players/${injury.player_id}`} className={linkCls}>
-            {String(injury.first_name)} {String(injury.last_name)}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href={`/admin/players/${injury.player_id}`} aria-label="Edit player and photo">
+            <PlayerAvatar
+              name={`${String(injury.first_name)} ${String(injury.last_name)}`}
+              team={(injury.team_abbr as string | null) ?? null}
+              headshotPath={(injury.headshot_path as string | null) ?? null}
+              size={56}
+            />
           </Link>
-        </p>
-        <h1 className="text-2xl font-bold sm:text-3xl">
-          {String(injury.injury_type)} injury — {fmtDate(injury.injury_date)}
-        </h1>
+          <div>
+            <Link
+              href={`/admin/players/${injury.player_id}`}
+              className="text-lg font-semibold text-teal underline-offset-2 hover:underline"
+            >
+              {String(injury.first_name)} {String(injury.last_name)}
+            </Link>
+            <h1 className="text-2xl font-bold sm:text-3xl">
+              {String(injury.injury_type)} injury — {fmtDate(injury.injury_date)}
+            </h1>
+          </div>
+        </div>
+        <Link href={`/admin/players/${injury.player_id}`} className={btnCls}>
+          Edit player &amp; photo →
+        </Link>
       </div>
       <Flash searchParams={sp} />
 
