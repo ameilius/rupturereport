@@ -1,5 +1,6 @@
 import type { RowDataPacket } from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { gated } from "@/lib/images";
 
 export interface TrackerRow {
   id: number;
@@ -8,6 +9,8 @@ export interface TrackerRow {
   position: string | null;
   team: string | null;
   teamName: string | null;
+  teamLogo: string | null;
+  headshot: string | null;
   injuryType: string;
   injuryDate: string | null;
   week: number | null;
@@ -31,7 +34,7 @@ function iso(v: unknown): string | null {
 export async function getTrackerRows(): Promise<TrackerRow[]> {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT i.id, p.slug, p.first_name, p.last_name, p.position,
-            t.abbreviation team, t.name team_name,
+            t.abbreviation team, t.name team_name, t.logo_path, p.headshot_path,
             i.injury_type, i.injury_date, i.week, i.phase, i.mechanism, i.home_away,
             o.abbreviation opponent, s.name stadium, s.surface_type, s.surface_brand,
             (SELECT u.stage FROM progress_updates u WHERE u.injury_id = i.id
@@ -50,6 +53,8 @@ export async function getTrackerRows(): Promise<TrackerRow[]> {
     position: r.position ?? null,
     team: r.team ?? null,
     teamName: r.team_name ?? null,
+    teamLogo: gated(r.logo_path),
+    headshot: gated(r.headshot_path),
     injuryType: r.injury_type,
     injuryDate: iso(r.injury_date),
     week: r.week ?? null,

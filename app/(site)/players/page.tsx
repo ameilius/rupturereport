@@ -1,6 +1,7 @@
 import { defaultOgImage } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { formatDate } from "@/lib/format";
@@ -72,10 +73,14 @@ async function PlayerList() {
             href={`/players/${p.slug}`}
             className="flex flex-col gap-1 p-5 transition-colors hover:bg-border/40 focus-visible:bg-border/40 sm:flex-row sm:items-center sm:justify-between"
           >
-            <span>
-              <span className="block text-lg font-semibold">{p.fullName}</span>
-              <span className="text-sm text-muted">
-                {[p.position, p.teamName].filter(Boolean).join(" · ")}
+            <span className="flex items-center gap-4">
+              <PlayerAvatar name={p.fullName} team={p.teamAbbreviation} headshotPath={p.headshotPath} size={48} />
+              <span>
+                <span className="block text-lg font-semibold">{p.fullName}</span>
+                <span className="flex items-center gap-1.5 text-sm text-muted">
+                  <TeamLogo abbr={p.teamAbbreviation} name={p.teamName} logoPath={p.teamLogo} size={18} />
+                  {[p.position, p.teamName].filter(Boolean).join(" · ")}
+                </span>
               </span>
             </span>
             <span className="flex flex-wrap items-center gap-2 text-sm">

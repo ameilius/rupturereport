@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 import type { TrackerRow } from "@/lib/tracker";
+import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
 
 const STAGE: Record<string, string> = {
   diagnosis: "Diagnosis", surgery: "Surgery", immobilization: "Immobilization",
@@ -149,10 +150,18 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
               <tbody className="divide-y divide-border">
                 {filtered.map((r) => (
                   <tr key={r.id} className="hover:bg-surface/60">
-                    <td className="px-4 py-3 font-medium">
-                      <Link href={`/players/${r.slug}`} className="hover:text-teal">{r.name}</Link>
+                    <td className="px-4 py-2.5 font-medium">
+                      <Link href={`/players/${r.slug}`} className="flex items-center gap-3 hover:text-teal">
+                        <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={32} />
+                        {r.name}
+                      </Link>
                     </td>
-                    <td className="px-4 py-3 text-muted" title={r.teamName ?? undefined}>{r.team ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-muted" title={r.teamName ?? undefined}>
+                      <span className="flex items-center gap-2">
+                        <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={22} />
+                        {r.team ?? "—"}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-muted">{r.position ?? "—"}</td>
                     <td className="px-4 py-3"><Badge type={r.injuryType} /></td>
                     <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate)}</time></td>
@@ -172,9 +181,15 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
               <li key={r.id}>
                 <Link href={`/players/${r.slug}`} className="block rounded-xl border border-border bg-surface p-4 active:bg-border/40">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold">{r.name}</p>
-                      <p className="text-sm text-muted">{[r.position, r.team].filter(Boolean).join(" · ")}</p>
+                    <div className="flex items-center gap-3">
+                      <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={44} />
+                      <div>
+                        <p className="font-semibold">{r.name}</p>
+                        <p className="flex items-center gap-1.5 text-sm text-muted">
+                          <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={18} />
+                          {[r.position, r.team].filter(Boolean).join(" · ")}
+                        </p>
+                      </div>
                     </div>
                     <Badge type={r.injuryType} />
                   </div>

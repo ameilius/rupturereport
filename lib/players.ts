@@ -1,5 +1,6 @@
 import type { RowDataPacket } from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { gated } from "@/lib/images";
 
 export type InjuryType = "ACL" | "Achilles" | "MCL" | "other";
 
@@ -39,6 +40,7 @@ export interface Team {
   abbreviation: string;
   name: string;
   slug: string;
+  logoPath: string | null;
 }
 
 export interface Player {
@@ -52,6 +54,7 @@ export interface Player {
   heightIn: number | null;
   weightLb: number | null;
   updatedAt: string | null;
+  headshotPath: string | null;
   team: Team | null;
 }
 
@@ -103,6 +106,8 @@ export interface PlayerListItem {
   position: string | null;
   teamName: string | null;
   teamAbbreviation: string | null;
+  teamLogo: string | null;
+  headshotPath: string | null;
   injuryType: InjuryType;
   injuryDate: string | null;
   latestStage: Stage | null;
@@ -131,9 +136,9 @@ export async function getPlayerBySlug(
 ): Promise<PlayerDetail | null> {
   const [playerRows] = await pool.query<RowDataPacket[]>(
     `SELECT p.id, p.first_name, p.last_name, p.slug, p.position, p.dob,
-            p.height_in, p.weight_lb, p.updated_at,
+            p.height_in, p.weight_lb, p.updated_at, p.headshot_path,
             t.id AS team_id, t.abbreviation AS team_abbr, t.name AS team_name,
-            t.slug AS team_slug
+            t.slug AS team_slug, t.logo_path AS team_logo
        FROM players p
        LEFT JOIN teams t ON t.id = p.team_id
       WHERE p.slug = ?
@@ -154,12 +159,14 @@ export async function getPlayerBySlug(
     heightIn: r.height_in ?? null,
     weightLb: r.weight_lb ?? null,
     updatedAt: toIsoDate(r.updated_at),
+    headshotPath: gated(r.headshot_path),
     team: r.team_id
       ? {
           id: r.team_id,
           abbreviation: r.team_abbr,
           name: r.team_name,
           slug: r.team_slug,
+          logoPath: gated(r.team_logo),
         }
       : null,
   };
@@ -256,8 +263,8 @@ export async function getAllPlayerSlugs(): Promise<
 
 export async function getInjuredPlayersList(): Promise<PlayerListItem[]> {
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT p.slug, p.first_name, p.last_name, p.position,
-            t.name AS team_name, t.abbreviation AS team_abbr,
+    `SELECT p.slug, p.first_name, p.last_name, p.position, p.headshot_path,
+            t.name AS team_name, t.abbreviation AS team_abbr, t.logo_path AS team_logo,
             i.injury_type, i.injury_date,
             (SELECT pu.stage FROM progress_updates pu
               WHERE pu.injury_id = i.id
@@ -275,6 +282,8 @@ export async function getInjuredPlayersList(): Promise<PlayerListItem[]> {
     position: r.position ?? null,
     teamName: r.team_name ?? null,
     teamAbbreviation: r.team_abbr ?? null,
+    teamLogo: gated(r.team_logo),
+    headshotPath: gated(r.headshot_path),
     injuryType: r.injury_type,
     injuryDate: toIsoDate(r.injury_date),
     latestStage: r.latest_stage ?? null,

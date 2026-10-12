@@ -104,6 +104,9 @@ export async function savePlayerAction(fd: FormData) {
   const last = str(fd, "last_name", 64);
   const position = str(fd, "position", 4);
   if (!first || !last || !position) fail(back, "First name, last name and position are required");
+  const headshot = str(fd, "headshot_path", 255);
+  if (headshot && (!/^\/[A-Za-z0-9/_.-]+\.(png|jpe?g|webp)$/.test(headshot) || headshot.includes("..")))
+    fail(back, "Headshot path must be a local path like /players/slug.png");
   const fields = {
     first_name: first,
     last_name: last,
@@ -112,6 +115,7 @@ export async function savePlayerAction(fd: FormData) {
     dob: date(fd, "dob"),
     height_in: int(fd, "height_in"),
     weight_lb: int(fd, "weight_lb"),
+    headshot_path: headshot,
   };
   let slug: string;
   let oldSlug: string | null = null;

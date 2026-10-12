@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { connection } from "next/server";
+import { initials, localImage, teamColors } from "@/lib/images";
 import { STAGE_LABELS, formatInjuryType, getPlayerBySlug } from "@/lib/players";
 
 export const alt = "Rupture Report player injury & recovery tracker";
@@ -21,6 +22,9 @@ export default async function Image({
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
   let team = "";
+  let teamAbbr: string | null = null;
+  let headshotPath: string | null = null;
+  let logoPath: string | null = null;
   let injury = "ACL / Achilles";
   let stage = "Recovery tracker";
   try {
@@ -30,6 +34,9 @@ export default async function Image({
       team = [data.player.position, data.player.team?.name]
         .filter(Boolean)
         .join(" · ");
+      teamAbbr = data.player.team?.abbreviation ?? null;
+      headshotPath = data.player.headshotPath;
+      logoPath = data.player.team?.logoPath ?? null;
       const i = data.injuries[0];
       if (i) {
         injury = `${formatInjuryType(i.injuryType)} injury`;
@@ -40,6 +47,19 @@ export default async function Image({
   } catch {
     // DB unavailable: fall back to slug-based card
   }
+
+  async function dataUrl(publicPath: string | null): Promise<string | null> {
+    const p = localImage(publicPath);
+    if (!p) return null;
+    try {
+      const buf = await readFile(join(process.cwd(), "public", p));
+      return `data:image/png;base64,${buf.toString("base64")}`;
+    } catch {
+      return null;
+    }
+  }
+  const [headshotSrc, logoSrc] = await Promise.all([dataUrl(headshotPath), dataUrl(logoPath)]);
+  const [primary, secondary] = teamColors(teamAbbr);
 
   let iconSrc: string | null = null;
   try {
@@ -81,7 +101,8 @@ export default async function Image({
             RUPTURE REPORT
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 40 }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
           <div
             style={{
               display: "flex",
@@ -108,13 +129,43 @@ export default async function Image({
               style={{
                 display: "flex",
                 fontSize: 36,
+                alignItems: "center",
                 color: "#8B98A5",
                 marginTop: 16,
               }}
             >
+              {logoSrc ? <img src={logoSrc} width={48} height={48} alt="" style={{ marginRight: 16 }} /> : null}
               {team}
             </div>
           ) : null}
+        </div>
+          {headshotSrc ? (
+            <img
+              src={headshotSrc}
+              width={260}
+              height={260}
+              alt=""
+              style={{ borderRadius: 130, border: "6px solid #14B8A6", background: "#121821" }}
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 260,
+                height: 260,
+                borderRadius: 130,
+                background: primary,
+                color: "#FFFFFF",
+                fontSize: 104,
+                fontWeight: 800,
+                border: `6px solid ${secondary}`,
+              }}
+            >
+              {initials(name)}
+            </div>
+          )}
         </div>
         <div
           style={{

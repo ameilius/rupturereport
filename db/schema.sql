@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS teams (
   name          VARCHAR(64) NOT NULL,
   slug          VARCHAR(80) NOT NULL UNIQUE,
   conference    ENUM('AFC','NFC') NOT NULL,
-  division      ENUM('East','North','South','West') NOT NULL
+  division      ENUM('East','North','South','West') NOT NULL,
+  logo_path     VARCHAR(255) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS stadiums (
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS players (
   dob         DATE NULL,
   height_in   SMALLINT UNSIGNED NULL,
   weight_lb   SMALLINT UNSIGNED NULL,
+  headshot_path VARCHAR(255) NULL,
   created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (team_id) REFERENCES teams(id),

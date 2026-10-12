@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
 import { formatDate, humanize } from "@/lib/format";
 import {
   STAGE_LABELS,
@@ -170,11 +171,27 @@ async function PlayerContent({ params }: Props) {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <header className="mt-6">
+      <header className="mt-6 flex items-center gap-5 sm:gap-7">
+        <PlayerAvatar
+          name={player.fullName}
+          team={player.team?.abbreviation ?? null}
+          headshotPath={player.headshotPath}
+          size={112}
+          priority
+        />
+        <div className="min-w-0">
         <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
           {player.fullName}
         </h1>
-        <p className="mt-3 text-lg text-muted">
+        <p className="mt-3 flex items-center gap-2 text-lg text-muted">
+          {player.team && (
+            <TeamLogo
+              abbr={player.team.abbreviation}
+              name={player.team.name}
+              logoPath={player.team.logoPath}
+              size={28}
+            />
+          )}
           {[player.position, player.team?.name].filter(Boolean).join(" · ") ||
             "NFL"}
         </p>
@@ -184,6 +201,7 @@ async function PlayerContent({ params }: Props) {
             <time dateTime={lastModified}>{formatDate(lastModified)}</time>
           </p>
         )}
+        </div>
       </header>
 
       {injuries.length === 0 ? (

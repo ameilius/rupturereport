@@ -41,6 +41,7 @@ export function SiteFooter() {
           <span>Rupture Report · NFL ACL &amp; Achilles Injury Tracker</span>
         </Link>
         <p>© {2026} Rupture Report. Data from public team and league reports.</p>
+        <p className="text-xs">Team logos and player images © their respective owners.</p>
       </div>
     </footer>
   );
