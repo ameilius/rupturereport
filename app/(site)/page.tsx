@@ -35,6 +35,13 @@ const jsonLd = {
       "@id": `${siteUrl}/#organization`,
       name: "Rupture Report",
       url: siteUrl,
+      email: "contact@rupturereport.com",
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "contact@rupturereport.com",
+        url: `${siteUrl}/contact`,
+      },
       logo: {
         "@type": "ImageObject",
         url: `${siteUrl}/brand/logo-square-1024.png`,
