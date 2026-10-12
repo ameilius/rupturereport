@@ -1,0 +1,251 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import {
+  clearFailures,
+  clearSessionCookie,
+  rateLimited,
+  recordFailure,
+  requireAdmin,
+  setSessionCookie,
+  verifyPassword,
+} from "@/lib/auth";
+import {
+  BODY_SIDES,
+  HOME_AWAY,
+  INJURY_TYPES,
+  MECHANISMS,
+  PHASES,
+  STAGES,
+  SURFACE_TYPES,
+  exec,
+  getInjury,
+  getPlayer,
+  slugify,
+  uniqueSlug,
+} from "@/lib/admin-db";
+
+// ---------- helpers ----------
+function str(fd: FormData, k: string, max = 255): string | null {
+  const v = fd.get(k);
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t ? t.slice(0, max) : null;
+}
+function int(fd: FormData, k: string): number | null {
+  const v = str(fd, k);
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isInteger(n) ? n : null;
+}
+function date(fd: FormData, k: string): string | null {
+  const v = str(fd, k);
+  return v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+}
+function oneOf<T extends readonly string[]>(
+  fd: FormData,
+  k: string,
+  allowed: T,
+): T[number] | null {
+  const v = str(fd, k);
+  return v && (allowed as readonly string[]).includes(v) ? v : null;
+}
+function fail(path: string, msg: string): never {
+  const sep = path.includes("?") ? "&" : "?";
+  redirect(`${path}${sep}error=${encodeURIComponent(msg)}`);
+}
+function revalidatePublic(playerSlug?: string | null) {
+  revalidatePath("/players");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/");
+  if (playerSlug) {
+    revalidatePath(`/players/${playerSlug}`);
+    revalidatePath(`/players/${playerSlug}/opengraph-image`);
+  }
+}
+
+// ---------- auth ----------
+export async function loginAction(fd: FormData) {
+  const h = await headers();
+  const ip =
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    h.get("x-real-ip") ||
+    "unknown";
+  if (rateLimited(ip)) fail("/admin/login", "Too many attempts. Try again in 15 minutes.");
+  const password = typeof fd.get("password") === "string" ? (fd.get("password") as string) : "";
+  let ok = false;
+  try {
+    ok = verifyPassword(password);
+  } catch {
+    ok = false;
+  }
+  if (!ok) {
+    recordFailure(ip);
+    fail("/admin/login", "Invalid password");
+  }
+  clearFailures(ip);
+  await setSessionCookie();
+  redirect("/admin");
+}
+
+export async function logoutAction() {
+  await clearSessionCookie();
+  redirect("/admin/login");
+}
+
+// ---------- players ----------
+export async function savePlayerAction(fd: FormData) {
+  await requireAdmin();
+  const id = int(fd, "id");
+  const back = id ? `/admin/players/${id}` : "/admin/players/new";
+  const first = str(fd, "first_name", 64);
+  const last = str(fd, "last_name", 64);
+  const position = str(fd, "position", 4);
+  if (!first || !last || !position) fail(back, "First name, last name and position are required");
+  const fields = {
+    first_name: first,
+    last_name: last,
+    position,
+    team_id: int(fd, "team_id"),
+    dob: date(fd, "dob"),
+    height_in: int(fd, "height_in"),
+    weight_lb: int(fd, "weight_lb"),
+  };
+  let slug: string;
+  let oldSlug: string | null = null;
+  if (id) {
+    const existing = await getPlayer(id);
+    if (!existing) fail("/admin/players", "Player not found");
+    oldSlug = existing.slug as string;
+    const wanted = str(fd, "slug", 140);
+    slug = wanted
+      ? await uniqueSlug("players", slugify(wanted), id)
+      : (existing.slug as string);
+    await exec(`UPDATE players SET ?, slug = ? WHERE id = ?`, [fields, slug, id]);
+  } else {
+    slug = await uniqueSlug("players", slugify(`${first} ${last}`));
+    const r = await exec(`INSERT INTO players SET ?, slug = ?`, [fields, slug]);
+    revalidatePublic(slug);
+    redirect(`/admin/players/${r.insertId}?saved=1`);
+  }
+  revalidatePublic(slug);
+  if (oldSlug && oldSlug !== slug) revalidatePublic(oldSlug);
+  redirect(`/admin/players/${id}?saved=1`);
+}
+
+// ---------- stadiums ----------
+export async function saveStadiumAction(fd: FormData) {
+  await requireAdmin();
+  const id = int(fd, "id");
+  const back = id ? `/admin/stadiums/${id}` : "/admin/stadiums/new";
+  const name = str(fd, "name", 128);
+  const city = str(fd, "city", 64);
+  const surfaceType = oneOf(fd, "surface_type", SURFACE_TYPES);
+  if (!name || !city || !surfaceType) fail(back, "Name, city and surface type are required");
+  const fields = {
+    name,
+    city,
+    state: str(fd, "state", 2)?.toUpperCase() ?? null,
+    surface_type: surfaceType,
+    surface_brand: str(fd, "surface_brand", 64),
+    notes: str(fd, "notes", 5000),
+  };
+  const slug = await uniqueSlug(
+    "stadiums",
+    slugify(str(fd, "slug", 140) ?? name),
+    id ?? undefined,
+  );
+  if (id) {
+    await exec(`UPDATE stadiums SET ?, slug = ? WHERE id = ?`, [fields, slug, id]);
+  } else {
+    await exec(`INSERT INTO stadiums SET ?, slug = ?`, [fields, slug]);
+  }
+  // Stadium details appear on every player page.
+  revalidatePath("/players/[slug]", "page");
+  revalidatePublic();
+  redirect("/admin/stadiums?saved=1");
+}
+
+// ---------- injuries ----------
+export async function saveInjuryAction(fd: FormData) {
+  await requireAdmin();
+  const id = int(fd, "id");
+  const playerId = int(fd, "player_id");
+  const back = id ? `/admin/injuries/${id}` : `/admin/injuries/new?player=${playerId ?? ""}`;
+  const player = playerId ? await getPlayer(playerId) : null;
+  if (!player) fail(back, "Player is required");
+  const injuryType = oneOf(fd, "injury_type", INJURY_TYPES);
+  const injuryDate = date(fd, "injury_date");
+  if (!injuryType || !injuryDate) fail(back, "Injury type and date are required");
+  const fields = {
+    player_id: playerId,
+    injury_type: injuryType,
+    injury_date: injuryDate,
+    season: int(fd, "season") ?? 2026,
+    week: int(fd, "week"),
+    stadium_id: int(fd, "stadium_id"),
+    home_away: oneOf(fd, "home_away", HOME_AWAY),
+    opponent_id: int(fd, "opponent_id"),
+    mechanism: oneOf(fd, "mechanism", MECHANISMS),
+    body_side: oneOf(fd, "body_side", BODY_SIDES),
+    phase: oneOf(fd, "phase", PHASES),
+    severity_notes: str(fd, "severity_notes", 5000),
+    source: str(fd, "source", 500),
+  };
+  let injuryId = id;
+  if (id) {
+    await exec(`UPDATE injuries SET ? WHERE id = ?`, [fields, id]);
+  } else {
+    injuryId = (await exec(`INSERT INTO injuries SET ?`, [fields])).insertId;
+  }
+  revalidatePublic(player.slug as string);
+  redirect(`/admin/injuries/${injuryId}?saved=1`);
+}
+
+export async function deleteInjuryAction(fd: FormData) {
+  await requireAdmin();
+  const id = int(fd, "id");
+  const injury = id ? await getInjury(id) : null;
+  if (!injury) fail("/admin", "Injury not found");
+  await exec(`DELETE FROM progress_updates WHERE injury_id = ?`, [id]);
+  await exec(`DELETE FROM injuries WHERE id = ?`, [id]);
+  revalidatePublic(injury.player_slug as string);
+  redirect(`/admin/players/${injury.player_id}?saved=1`);
+}
+
+// ---------- progress updates ----------
+export async function addUpdateAction(fd: FormData) {
+  await requireAdmin();
+  const injuryId = int(fd, "injury_id");
+  const injury = injuryId ? await getInjury(injuryId) : null;
+  if (!injury) fail("/admin", "Injury not found");
+  const back = `/admin/injuries/${injuryId}`;
+  const stage = oneOf(fd, "stage", STAGES);
+  const updateDate = date(fd, "update_date");
+  if (!stage || !updateDate) fail(back, "Date and stage are required");
+  await exec(`INSERT INTO progress_updates SET ?`, [
+    {
+      injury_id: injuryId,
+      update_date: updateDate,
+      stage,
+      status_label: str(fd, "status_label", 64),
+      notes: str(fd, "notes", 5000),
+      source: str(fd, "source", 500),
+    },
+  ]);
+  revalidatePublic(injury.player_slug as string);
+  redirect(`${back}?saved=1`);
+}
+
+export async function deleteUpdateAction(fd: FormData) {
+  await requireAdmin();
+  const id = int(fd, "id");
+  const injuryId = int(fd, "injury_id");
+  const injury = injuryId ? await getInjury(injuryId) : null;
+  if (!id || !injury) fail("/admin", "Update not found");
+  await exec(`DELETE FROM progress_updates WHERE id = ? AND injury_id = ?`, [id, injuryId]);
+  revalidatePublic(injury.player_slug as string);
+  redirect(`/admin/injuries/${injuryId}?saved=1`);
+}
