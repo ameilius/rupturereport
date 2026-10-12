@@ -12,10 +12,10 @@ CNF=$(mktemp); chmod 600 "$CNF"; trap 'rm -f "$CNF"' EXIT
   echo "host=$(envval DB_HOST)"
   echo "port=$(envval DB_PORT)"
   echo "user=$(envval DB_USER)"
-  echo "password=\"$(envval DB_PASSWORD)\""
   echo "default-character-set=utf8mb4"
 } > "$CNF"
 DB=$(envval DB_NAME)
+export MYSQL_PWD="$(envval DB_PASSWORD)"
 sql() { mariadb --defaults-extra-file="$CNF" "$DB" "$@"; }
 
 echo "== Schema (idempotent)"
