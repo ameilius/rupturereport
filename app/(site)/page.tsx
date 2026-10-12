@@ -1,3 +1,4 @@
+import { defaultOgImage } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -22,8 +23,8 @@ export const metadata: Metadata = {
     "NFL injury tracker",
     "turf vs grass injuries",
   ],
-  openGraph: { type: "website", url: "/", title, description, siteName: "Rupture Report" },
-  twitter: { card: "summary_large_image", title, description },
+  openGraph: { type: "website", url: "/", title, description, images: [defaultOgImage], siteName: "Rupture Report" },
+  twitter: { card: "summary_large_image", title, description, images: [defaultOgImage.url] },
 };
 
 const jsonLd = {

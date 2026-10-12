@@ -1,3 +1,4 @@
+import { defaultOgImage } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -18,8 +19,8 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/players" },
-  openGraph: { type: "website", url: "/players", title, description },
-  twitter: { card: "summary_large_image", title, description },
+  openGraph: { type: "website", url: "/players", title, description, images: [defaultOgImage] },
+  twitter: { card: "summary_large_image", title, description, images: [defaultOgImage.url] },
 };
 
 export default function PlayersPage() {
