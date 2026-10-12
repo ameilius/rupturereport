@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { pool } from "@/lib/db";
@@ -29,6 +30,14 @@ export default function Home() {
         <Suspense fallback="checking database…">
           <TeamCount />
         </Suspense>
+      </div>
+      <div className="mt-8">
+        <Link
+          href="/players"
+          className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 font-semibold text-bg transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
+        >
+          Browse tracked players <span aria-hidden="true">→</span>
+        </Link>
       </div>
     </main>
   );
