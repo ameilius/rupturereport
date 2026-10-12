@@ -23,13 +23,16 @@ export function gated(path: string | null | undefined): string | null {
   return officialImagesEnabled() ? path : null;
 }
 
-/** Team colours for fallback badges/avatars: [primary, secondary]. */
+/**
+ * Official team colours for fallback badges/avatars: [primary, secondary].
+ * Hex values verified against teamcolorcodes.com NFL table (2026-10-12).
+ */
 export const TEAM_COLORS: Record<string, [string, string]> = {
   ARI: ["#97233F", "#FFB612"], ATL: ["#A71930", "#000000"], BAL: ["#241773", "#9E7C0C"],
   BUF: ["#00338D", "#C60C30"], CAR: ["#0085CA", "#101820"], CHI: ["#0B162A", "#C83803"],
   CIN: ["#FB4F14", "#000000"], CLE: ["#311D00", "#FF3C00"], DAL: ["#003594", "#869397"],
   DEN: ["#FB4F14", "#002244"], DET: ["#0076B6", "#B0B7BC"], GB: ["#203731", "#FFB612"],
-  HOU: ["#03202F", "#A71930"], IND: ["#002C5F", "#A2AAAD"], JAX: ["#006778", "#D7A22A"],
+  HOU: ["#03202F", "#A71930"], IND: ["#002C5F", "#A2AAAD"], JAX: ["#101820", "#D7A22A"],
   KC: ["#E31837", "#FFB81C"], LV: ["#000000", "#A5ACAF"], LAC: ["#0080C6", "#FFC20E"],
   LAR: ["#003594", "#FFA300"], MIA: ["#008E97", "#FC4C02"], MIN: ["#4F2683", "#FFC62F"],
   NE: ["#002244", "#C60C30"], NO: ["#101820", "#D3BC8D"], NYG: ["#0B2265", "#A71930"],
@@ -51,4 +54,24 @@ export function initials(name: string): string {
 export function localImage(path: string | null | undefined): string | null {
   if (!path) return null;
   return /^\/[A-Za-z0-9/_.-]+\.(png|jpe?g|webp)$/.test(path) && !path.includes("..") ? path : null;
+}
+
+function luminance(hex: string): number {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+}
+
+export function contrast(a: string, b: string): number {
+  const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
+}
+
+/** Readable text colour on a team's primary: the secondary colour if it passes 4.5:1, else white or near-black. */
+export function textOn(primary: string, preferred?: string): string {
+  if (preferred && contrast(primary, preferred) >= 4.5) return preferred;
+  return contrast(primary, "#FFFFFF") >= contrast(primary, "#101820") ? "#FFFFFF" : "#101820";
 }

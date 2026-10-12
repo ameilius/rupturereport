@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { connection } from "next/server";
-import { initials, isCustomUpload, localImage, teamColors } from "@/lib/images";
+import { initials, isCustomUpload, localImage, teamColors, textOn } from "@/lib/images";
 import { readUpload } from "@/lib/uploads";
 import { STAGE_LABELS, formatInjuryType, getPlayerBySlug } from "@/lib/players";
 
@@ -161,7 +161,7 @@ export default async function Image({
                 height: 260,
                 borderRadius: 130,
                 background: primary,
-                color: "#FFFFFF",
+                color: textOn(primary),
                 fontSize: 104,
                 fontWeight: 800,
                 border: `6px solid ${secondary}`,
