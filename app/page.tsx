@@ -1,44 +1,149 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { pool } from "@/lib/db";
+import InjuryTracker from "@/components/InjuryTracker";
+import { computeStats, getTrackerRows, type TrackerRow } from "@/lib/tracker";
 
-async function TeamCount() {
-  await connection();
-  const [rows] = await pool.query("SELECT COUNT(*) AS count FROM teams");
-  const count = (rows as { count: number }[])[0].count;
-  return <>{count} teams loaded</>;
-}
+const siteUrl = "https://rupturereport.com";
+const title = "NFL ACL & Achilles Injuries 2026 | Injury Tracker";
+const description =
+  "Every NFL ACL and Achilles injury of 2026: torn ACL and Achilles list with dates, teams, turf vs grass, mechanism, and recovery status for each player.";
+
+export const metadata: Metadata = {
+  title: { absolute: `${title} | Rupture Report` },
+  description,
+  alternates: { canonical: "/" },
+  keywords: [
+    "NFL ACL injuries 2026",
+    "NFL Achilles injuries 2026",
+    "torn ACL NFL",
+    "torn Achilles NFL",
+    "NFL injury tracker",
+    "turf vs grass injuries",
+  ],
+  openGraph: { type: "website", url: "/", title, description, siteName: "Rupture Report" },
+  twitter: { card: "summary_large_image", title, description },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      url: siteUrl,
+      name: "Rupture Report",
+      description,
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "Dataset",
+      "@id": `${siteUrl}/#dataset`,
+      name: "NFL ACL & Achilles Injuries 2026",
+      description:
+        "Tracked torn ACL and Achilles injuries across the 2026 NFL offseason, preseason and regular season, including injury date, team, position, game context, playing surface, mechanism and recovery stage.",
+      url: siteUrl,
+      creator: { "@type": "Organization", name: "Rupture Report", url: siteUrl },
+      temporalCoverage: "2026",
+      spatialCoverage: "United States",
+      keywords: [
+        "NFL ACL injuries 2026",
+        "NFL Achilles injuries 2026",
+        "torn ACL",
+        "torn Achilles",
+        "artificial turf",
+        "natural grass",
+        "injury recovery",
+      ],
+      isAccessibleForFree: true,
+      includedInDataCatalog: { "@id": `${siteUrl}/#website` },
+    },
+  ],
+};
 
 export default function Home() {
   return (
-    <main className="mx-auto max-w-5xl px-6 py-24">
-      <p className="text-sm font-semibold uppercase tracking-widest text-teal">
-        2026 NFL Season
-      </p>
-      <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-6xl">
-        ACL &amp; Achilles Recovery Tracker
-      </h1>
-      <p className="mt-6 max-w-2xl text-lg text-muted">
-        Every major NFL ACL and Achilles injury, tracked from the day it
-        happens to the day the player returns, with turf type, stadium, and
-        mechanism for each one.
-      </p>
-      <div className="mt-10 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm text-muted">
-        <span className="h-2 w-2 rounded-full bg-amber" />
-        Launching soon ·{" "}
-        <Suspense fallback="checking database…">
-          <TeamCount />
-        </Suspense>
-      </div>
-      <div className="mt-8">
-        <Link
-          href="/players"
-          className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 font-semibold text-bg transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
-        >
-          Browse tracked players <span aria-hidden="true">→</span>
-        </Link>
-      </div>
+    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-widest text-teal">2026 NFL Season</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
+          NFL ACL &amp; Achilles Injury Tracker
+        </h1>
+        <p className="mt-2 text-muted">
+          Every torn ACL and Achilles of 2026, with surface, game context and recovery status.{" "}
+          <Link href="/players" className="text-teal hover:underline">All players →</Link>
+        </p>
+      </header>
+      <Suspense fallback={<TrackerSkeleton />}>
+        <TrackerData />
+      </Suspense>
     </main>
+  );
+}
+
+async function TrackerData() {
+  await connection();
+  let rows: TrackerRow[] = [];
+  let failed = false;
+  try {
+    rows = await getTrackerRows();
+  } catch {
+    failed = true;
+  }
+  if (failed) {
+    return (
+      <p className="mt-8 rounded-xl border border-border bg-surface p-6 text-muted">
+        Injury data is temporarily unavailable. Please check back shortly.
+      </p>
+    );
+  }
+  const s = computeStats(rows);
+  const stats: { label: string; value: string; sub?: string; tone?: string }[] = [
+    { label: "Tracked tears", value: String(s.total) },
+    { label: "ACL", value: String(s.acl), tone: "text-teal" },
+    { label: "Achilles", value: String(s.achilles), tone: "text-amber" },
+    {
+      label: "Artificial turf",
+      value: s.artificialPct == null ? "—" : `${s.artificialPct}%`,
+      sub: s.games ? `of ${s.games} game injur${s.games === 1 ? "y" : "ies"} · ${s.naturalPct}% grass/hybrid` : "no game injuries yet",
+    },
+    {
+      label: "Non-contact",
+      value: s.nonContactPct == null ? "—" : `${s.nonContactPct}%`,
+      sub: s.mechanismKnown ? `where known (n=${s.mechanismKnown})` : "mechanism unknown",
+    },
+  ];
+  return (
+    <>
+      <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {stats.map((x) => (
+          <div key={x.label} className="rounded-xl border border-border bg-surface p-3 sm:p-4">
+            <dt className="text-xs uppercase tracking-wider text-muted">{x.label}</dt>
+            <dd className={`mt-1 text-2xl font-bold ${x.tone ?? ""}`}>{x.value}</dd>
+            {x.sub && <dd className="mt-0.5 text-xs text-muted">{x.sub}</dd>}
+          </div>
+        ))}
+      </dl>
+      <InjuryTracker rows={rows} />
+    </>
+  );
+}
+
+function TrackerSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading injury data" className="animate-pulse">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-20 rounded-xl bg-surface" />
+        ))}
+      </div>
+      <div className="mt-8 h-10 rounded-lg bg-surface" />
+      <div className="mt-4 h-96 rounded-xl bg-surface" />
+    </div>
   );
 }

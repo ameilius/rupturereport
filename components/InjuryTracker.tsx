@@ -1,0 +1,195 @@
+"use client";
+
+import Link from "next/link";
+import { useDeferredValue, useMemo, useState } from "react";
+import type { TrackerRow } from "@/lib/tracker";
+
+const STAGE: Record<string, string> = {
+  diagnosis: "Diagnosis", surgery: "Surgery", immobilization: "Immobilization",
+  non_weight_bearing: "Non-weight-bearing", weight_bearing: "Weight-bearing",
+  jogging: "Jogging", cutting: "Cutting", practice_limited: "Limited practice",
+  practice_full: "Full practice", game_ready: "Game ready", returned: "Returned",
+  reinjured: "Re-injured",
+};
+
+const sel =
+  "rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal";
+
+function fmt(d: string | null) {
+  if (!d) return "—";
+  return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", {
+    month: "short", day: "numeric", timeZone: "UTC",
+  });
+}
+
+function Badge({ type }: { type: string }) {
+  const cls =
+    type === "Achilles" ? "bg-amber/15 text-amber" : "bg-teal/15 text-teal";
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
+      {type === "other" ? "Other" : type}
+    </span>
+  );
+}
+
+function context(r: TrackerRow) {
+  if (!r.isGame) return "Practice";
+  const pre = r.phase === "preseason" ? "Pre" : r.phase === "playoffs" ? "Playoffs" : r.week ? `Wk ${r.week}` : "Game";
+  const opp = r.opponent ? `${r.homeAway === "away" ? "@" : "vs"} ${r.opponent}` : "";
+  return `${pre} ${opp}`.trim();
+}
+
+function surfaceLabel(r: TrackerRow) {
+  if (!r.surface) return "—";
+  return r.surface.charAt(0).toUpperCase() + r.surface.slice(1);
+}
+
+export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
+  const [q, setQ] = useState("");
+  const [type, setType] = useState("");
+  const [team, setTeam] = useState("");
+  const [surface, setSurface] = useState("");
+  const [phase, setPhase] = useState("");
+  const dq = useDeferredValue(q);
+
+  const teams = useMemo(
+    () => [...new Set(rows.map((r) => r.team).filter(Boolean) as string[])].sort(),
+    [rows],
+  );
+
+  const filtered = useMemo(() => {
+    const needle = dq.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (type && r.injuryType !== type) return false;
+      if (team && r.team !== team) return false;
+      if (phase && r.phase !== phase) return false;
+      if (surface === "practice" ? r.isGame : surface && r.surface !== surface) return false;
+      if (needle && !`${r.name} ${r.teamName ?? ""} ${r.team ?? ""} ${r.position ?? ""}`.toLowerCase().includes(needle)) return false;
+      return true;
+    });
+  }, [rows, dq, type, team, surface, phase]);
+
+  const active = q || type || team || surface || phase;
+
+  return (
+    <section aria-labelledby="tracker-heading" className="mt-8">
+      <h2 id="tracker-heading" className="sr-only">Injury tracker</h2>
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="sr-only" htmlFor="tq">Search players or teams</label>
+        <input
+          id="tq"
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search player or team…"
+          className={`${sel} w-full sm:w-64`}
+        />
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <label className="sr-only" htmlFor="ft">Injury type</label>
+          <select id="ft" className={sel} value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="">All injuries</option>
+            <option value="ACL">ACL</option>
+            <option value="Achilles">Achilles</option>
+          </select>
+          <label className="sr-only" htmlFor="fteam">Team</label>
+          <select id="fteam" className={sel} value={team} onChange={(e) => setTeam(e.target.value)}>
+            <option value="">All teams</option>
+            {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <label className="sr-only" htmlFor="fs">Surface</label>
+          <select id="fs" className={sel} value={surface} onChange={(e) => setSurface(e.target.value)}>
+            <option value="">All surfaces</option>
+            <option value="artificial">Artificial</option>
+            <option value="natural">Natural</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="practice">Practice (no game)</option>
+          </select>
+          <label className="sr-only" htmlFor="fp">Phase</label>
+          <select id="fp" className={sel} value={phase} onChange={(e) => setPhase(e.target.value)}>
+            <option value="">All phases</option>
+            <option value="preseason">Offseason / preseason</option>
+            <option value="regular">Regular season</option>
+            <option value="playoffs">Playoffs</option>
+          </select>
+        </div>
+        <p className="text-sm text-muted sm:ml-auto" aria-live="polite">
+          {filtered.length} of {rows.length}
+          {active && (
+            <button
+              type="button"
+              className="ml-3 text-teal hover:underline"
+              onClick={() => { setQ(""); setType(""); setTeam(""); setSurface(""); setPhase(""); }}
+            >
+              Clear
+            </button>
+          )}
+        </p>
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="mt-6 rounded-xl border border-border bg-surface p-6 text-muted">
+          {rows.length === 0 ? "No injuries tracked yet." : "No injuries match these filters."}
+        </p>
+      ) : (
+        <>
+          <div className="mt-4 hidden overflow-x-auto rounded-xl border border-border md:block">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-surface text-xs uppercase tracking-wider text-muted">
+                <tr>
+                  <th scope="col" className="px-4 py-3">Player</th>
+                  <th scope="col" className="px-4 py-3">Team</th>
+                  <th scope="col" className="px-4 py-3">Pos</th>
+                  <th scope="col" className="px-4 py-3">Injury</th>
+                  <th scope="col" className="px-4 py-3">Date</th>
+                  <th scope="col" className="px-4 py-3">Stage</th>
+                  <th scope="col" className="px-4 py-3">Game</th>
+                  <th scope="col" className="px-4 py-3">Surface</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((r) => (
+                  <tr key={r.id} className="hover:bg-surface/60">
+                    <td className="px-4 py-3 font-medium">
+                      <Link href={`/players/${r.slug}`} className="hover:text-teal">{r.name}</Link>
+                    </td>
+                    <td className="px-4 py-3 text-muted" title={r.teamName ?? undefined}>{r.team ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted">{r.position ?? "—"}</td>
+                    <td className="px-4 py-3"><Badge type={r.injuryType} /></td>
+                    <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate)}</time></td>
+                    <td className="px-4 py-3">{r.stage ? STAGE[r.stage] ?? r.stage : "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted">{context(r)}</td>
+                    <td className="px-4 py-3" title={r.stadium ? `${r.stadium}${r.surfaceBrand ? ` · ${r.surfaceBrand}` : ""}` : undefined}>
+                      {surfaceLabel(r)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <ul className="mt-4 space-y-3 md:hidden">
+            {filtered.map((r) => (
+              <li key={r.id}>
+                <Link href={`/players/${r.slug}`} className="block rounded-xl border border-border bg-surface p-4 active:bg-border/40">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">{r.name}</p>
+                      <p className="text-sm text-muted">{[r.position, r.team].filter(Boolean).join(" · ")}</p>
+                    </div>
+                    <Badge type={r.injuryType} />
+                  </div>
+                  <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                    <div><dt className="text-muted">Date</dt><dd>{fmt(r.injuryDate)}</dd></div>
+                    <div><dt className="text-muted">Where</dt><dd>{context(r)}</dd></div>
+                    <div><dt className="text-muted">Surface</dt><dd>{surfaceLabel(r)}</dd></div>
+                  </dl>
+                  <p className="mt-2 text-xs text-muted">Stage: <span className="text-text">{r.stage ? STAGE[r.stage] ?? r.stage : "—"}</span></p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
