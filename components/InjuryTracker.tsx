@@ -5,6 +5,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 import type { TrackerRow } from "@/lib/tracker";
 import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
 import { MiniStageBar } from "@/components/RecoveryProgress";
+import InjuryBodyIcon from "@/components/InjuryBodyIcon";
 
 const STAGE: Record<string, string> = {
   diagnosis: "Diagnosis", surgery: "Surgery", immobilization: "Immobilization",
@@ -24,12 +25,15 @@ function fmt(d: string | null) {
   });
 }
 
-function Badge({ type }: { type: string }) {
+function Badge({ type, side }: { type: string; side?: string | null }) {
   const cls =
     type === "Achilles" ? "bg-amber/15 text-amber" : "bg-teal/15 text-teal";
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
-      {type === "other" ? "Other" : type}
+    <span className="inline-flex items-center gap-1.5">
+      <InjuryBodyIcon type={type} side={side} size={22} decorative />
+      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
+        {type === "other" ? "Other" : type}
+      </span>
     </span>
   );
 }
@@ -164,7 +168,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted">{r.position ?? "—"}</td>
-                    <td className="px-4 py-3"><Badge type={r.injuryType} /></td>
+                    <td className="px-4 py-3"><Badge type={r.injuryType} side={r.bodySide} /></td>
                     <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate)}</time></td>
                     <td className="px-4 py-3 whitespace-nowrap"><MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted">{context(r)}</td>
@@ -192,7 +196,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
                         </p>
                       </div>
                     </div>
-                    <Badge type={r.injuryType} />
+                    <Badge type={r.injuryType} side={r.bodySide} />
                   </div>
                   <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
                     <div><dt className="text-muted">Date</dt><dd>{fmt(r.injuryDate)}</dd></div>

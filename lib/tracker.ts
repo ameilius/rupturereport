@@ -12,6 +12,7 @@ export interface TrackerRow {
   teamLogo: string | null;
   headshot: string | null;
   injuryType: string;
+  bodySide: string | null;
   injuryDate: string | null;
   week: number | null;
   phase: string | null;
@@ -38,7 +39,7 @@ export async function getTrackerRows(): Promise<TrackerRow[]> {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT i.id, p.slug, p.first_name, p.last_name, p.position,
             t.abbreviation team, t.name team_name, t.logo_path, p.headshot_path,
-            i.injury_type, i.injury_date, i.week, i.phase, i.mechanism, i.home_away,
+            i.injury_type, i.body_side, i.injury_date, i.week, i.phase, i.mechanism, i.home_away,
             o.abbreviation opponent, o.name opponent_name, s.name stadium, s.surface_type, s.surface_brand,
             (SELECT u.stage FROM progress_updates u WHERE u.injury_id = i.id
               ORDER BY u.update_date DESC, u.id DESC LIMIT 1) stage,
@@ -63,6 +64,7 @@ export async function getTrackerRows(): Promise<TrackerRow[]> {
     teamLogo: gated(r.logo_path),
     headshot: gated(r.headshot_path),
     injuryType: r.injury_type,
+    bodySide: r.body_side ?? null,
     injuryDate: iso(r.injury_date),
     week: r.week ?? null,
     phase: r.phase ?? null,

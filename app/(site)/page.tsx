@@ -150,8 +150,8 @@ async function TrackerData() {
   const span = wk ? `per week since ${formatDate(wk.start)}` : "";
   const stats: StatItem[] = [
     { label: "Tracked tears", value: String(s.total), num: s.total, spark: wk ? { data: wk.total, color: "#E6EDF3", title: `All tears ${span}` } : undefined },
-    { label: "ACL", value: String(s.acl), num: s.acl, tone: "text-teal", spark: wk ? { data: wk.acl, color: "#14B8A6", title: `ACL tears ${span}` } : undefined },
-    { label: "Achilles", value: String(s.achilles), num: s.achilles, tone: "text-amber", spark: wk ? { data: wk.achilles, color: "#F59E0B", title: `Achilles tears ${span}` } : undefined },
+    { label: "ACL", value: String(s.acl), num: s.acl, tone: "text-teal", icon: "ACL", spark: wk ? { data: wk.acl, color: "#14B8A6", title: `ACL tears ${span}` } : undefined },
+    { label: "Achilles", value: String(s.achilles), num: s.achilles, tone: "text-amber", icon: "Achilles", spark: wk ? { data: wk.achilles, color: "#F59E0B", title: `Achilles tears ${span}` } : undefined },
     {
       label: "Artificial turf",
       value: s.artificialPct == null ? "—" : `${s.artificialPct}%`,

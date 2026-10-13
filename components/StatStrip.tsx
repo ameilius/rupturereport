@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import InjuryBodyIcon from "@/components/InjuryBodyIcon";
 
 export interface StatItem {
   label: string;
@@ -9,6 +10,7 @@ export interface StatItem {
   suffix?: string;
   sub?: string;
   tone?: string;
+  icon?: string; // injury type for a small body diagram
   spark?: { data: number[]; color: string; title: string };
 }
 
@@ -82,8 +84,9 @@ export default function StatStrip({ stats }: { stats: StatItem[] }) {
       {stats.map((x) => (
         <div key={x.label} className="rounded-xl border border-border bg-surface p-3 sm:p-4">
           <dt className="text-xs uppercase tracking-wider text-muted">{x.label}</dt>
-          <dd className={`mt-1 text-2xl font-bold ${x.tone ?? ""}`}>
+          <dd className={`mt-1 flex items-center gap-2 text-2xl font-bold ${x.tone ?? ""}`}>
             <CountUp value={x.value} num={x.num} suffix={x.suffix} />
+            {x.icon && <InjuryBodyIcon type={x.icon} size={28} decorative />}
           </dd>
           {x.sub && <dd className="mt-0.5 text-xs text-muted">{x.sub}</dd>}
           {x.spark && (

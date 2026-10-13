@@ -15,6 +15,7 @@ import {
 } from "@/lib/players";
 import { contrast, localImage, teamColors } from "@/lib/images";
 import { RecoveryStepper } from "@/components/RecoveryProgress";
+import InjuryBodyIcon, { injuryCaption } from "@/components/InjuryBodyIcon";
 import { trackDates } from "@/lib/recovery";
 import { organizationRef } from "@/lib/structured-data";
 import { conditionAnatomy, conditionName, injurySentence, playerInjuryFacts } from "@/lib/summaries";
@@ -342,7 +343,7 @@ function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boo
       style={{ borderLeftColor: "var(--accent)" }}
     >
       <div className="flex flex-wrap items-center gap-3">
-        <span className="rounded-full bg-amber/15 px-3 py-1 text-sm font-semibold text-amber">
+        <span className={`rounded-full px-3 py-1 text-sm font-semibold ${injury.injuryType === "ACL" ? "bg-teal/15 text-teal" : "bg-amber/15 text-amber"}`}>
           {type}
         </span>
         <h2 id={`injury-${injury.id}`} className="text-xl font-semibold underline decoration-2 underline-offset-8" style={{ textDecorationColor: "var(--accent)" }}>
@@ -359,7 +360,14 @@ function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boo
         </h2>
       </div>
 
-      <dl className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-start">
+        <figure className="flex shrink-0 flex-col items-center rounded-xl border border-border bg-bg/50 px-5 py-4">
+          <InjuryBodyIcon type={injury.injuryType} side={injury.bodySide} size={120} />
+          <figcaption className={`mt-2 text-sm font-semibold ${injury.injuryType === "ACL" ? "text-teal" : injury.injuryType === "Achilles" ? "text-amber" : "text-muted"}`}>
+            {injuryCaption(injury.injuryType, injury.bodySide)}
+          </figcaption>
+        </figure>
+      <dl className="grid flex-1 grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Fact
           label="Season / week"
           value={
@@ -403,6 +411,7 @@ function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boo
           }
         />
       </dl>
+      </div>
 
       {injury.severityNotes && (
         <p className="mt-6 text-muted">{injury.severityNotes}</p>
