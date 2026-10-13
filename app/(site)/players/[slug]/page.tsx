@@ -14,7 +14,7 @@ import {
   type Injury,
   type PlayerDetail,
 } from "@/lib/players";
-import { localImage } from "@/lib/images";
+import { contrast, localImage, teamColors } from "@/lib/images";
 import { organizationRef } from "@/lib/structured-data";
 import { conditionAnatomy, conditionName, injurySentence, playerInjuryFacts } from "@/lib/summaries";
 
@@ -116,6 +116,10 @@ async function PlayerContent({ params }: Props) {
   const { player, injuries, lastModified } = data;
   const { title, description } = describe(data);
   const url = `${siteUrl}/players/${player.slug}`;
+  const [tp, ts] = teamColors(player.team?.abbreviation ?? null);
+  // Most visible team colour on the dark background, for thin accents.
+  const accent = contrast(tp, "#0B0F14") >= contrast(ts, "#0B0F14") ? tp : ts;
+  const teamLogo = player.team ? localImage(player.team.logoPath) : null;
   const shareType = injuries[0] ? formatInjuryType(injuries[0].injuryType) : "Injury";
   const summaries = injuries.map((i) => injurySentence(playerInjuryFacts(player, i)));
   const headshot = localImage(player.headshotPath);
@@ -211,19 +215,32 @@ async function PlayerContent({ params }: Props) {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <header className="mt-6 flex items-center gap-5 sm:gap-7">
-        <PlayerAvatar
-          name={player.fullName}
-          team={player.team?.abbreviation ?? null}
-          headshotPath={player.headshotPath}
-          size={112}
-          priority
-        />
-        <div className="min-w-0">
+      <div style={{ "--tp": tp, "--ts": ts, "--accent": accent } as React.CSSProperties}>
+      <header className="relative mt-6 flex items-center gap-5 overflow-hidden rounded-2xl border border-border p-5 sm:gap-7 sm:p-8"
+        style={{ background: `linear-gradient(115deg, ${tp}cc 0%, ${tp}55 38%, #0B0F14 78%)` }}>
+        {teamLogo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={teamLogo} alt="" aria-hidden="true"
+            className="pointer-events-none absolute -right-10 top-1/2 h-72 w-72 -translate-y-1/2 object-contain opacity-[0.07] sm:right-4" />
+        )}
+        <div className="relative shrink-0">
+          <div aria-hidden="true" className="absolute -inset-6 rounded-full blur-xl"
+            style={{ background: `radial-gradient(circle, ${ts}66 0%, ${ts}00 70%)` }} />
+          <div className="relative rounded-full p-[3px]" style={{ background: `linear-gradient(135deg, ${ts}, ${tp})` }}>
+            <PlayerAvatar
+              name={player.fullName}
+              team={player.team?.abbreviation ?? null}
+              headshotPath={player.headshotPath}
+              size={112}
+              priority
+            />
+          </div>
+        </div>
+        <div className="relative min-w-0">
         <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
           {player.fullName}
         </h1>
-        <p className="mt-3 flex items-center gap-2 text-lg text-muted">
+        <p className="mt-3 flex items-center gap-2 text-lg text-text/80">
           {player.team && (
             <TeamLogo
               abbr={player.team.abbreviation}
@@ -237,7 +254,7 @@ async function PlayerContent({ params }: Props) {
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           {lastModified && (
-            <p className="text-sm text-muted">
+            <p className="text-sm text-text/70">
               Last updated{" "}
               <time dateTime={lastModified}>{formatDate(lastModified)}</time>
             </p>
@@ -269,6 +286,7 @@ async function PlayerContent({ params }: Props) {
           ))}
         </div>
       )}
+      </div>
     </>
   );
 }
@@ -302,13 +320,14 @@ function InjuryCard({ injury }: { injury: Injury }) {
   return (
     <article
       aria-labelledby={`injury-${injury.id}`}
-      className="rounded-2xl border border-border bg-surface p-5 sm:p-8"
+      className="rounded-2xl border border-border border-l-4 bg-surface p-5 sm:p-8"
+      style={{ borderLeftColor: "var(--accent)" }}
     >
       <div className="flex flex-wrap items-center gap-3">
         <span className="rounded-full bg-amber/15 px-3 py-1 text-sm font-semibold text-amber">
           {type}
         </span>
-        <h2 id={`injury-${injury.id}`} className="text-xl font-semibold">
+        <h2 id={`injury-${injury.id}`} className="text-xl font-semibold underline decoration-2 underline-offset-8" style={{ textDecorationColor: "var(--accent)" }}>
           {type} injury
           {injury.injuryDate && (
             <>
@@ -393,12 +412,12 @@ function RecoveryTimeline({ injury }: { injury: Injury }) {
 
   return (
     <section className="mt-8" aria-labelledby={`timeline-${injury.id}`}>
-      <h3 id={`timeline-${injury.id}`} className="text-lg font-semibold">
+      <h3 id={`timeline-${injury.id}`} className="border-l-4 pl-3 text-lg font-semibold" style={{ borderLeftColor: "var(--accent)" }}>
         Recovery timeline
       </h3>
       <p className="mt-1 text-sm text-muted">
         Current stage:{" "}
-        <strong className={reinjured ? "text-amber" : "text-teal"}>
+        <strong className={`rounded-md border-l-[3px] bg-bg/60 px-2 py-0.5 ${reinjured ? "text-amber" : "text-teal"}`} style={{ borderLeftColor: "var(--accent)" }}>
           {latest ? STAGE_LABELS[latest.stage] : "Awaiting update"}
         </strong>
       </p>
