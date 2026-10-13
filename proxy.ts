@@ -3,9 +3,14 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/session-token";
 import { playerSlugExists } from "@/lib/player-slugs";
 
 const PLAYER_PAGE = /^\/players\/([^/]+)\/?$/;
+const PLAYER_STATIC_FILE = /^\/players\/[^/]+\.(?:png|jpe?g|webp|gif|svg|avif|ico)$/i;
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Static files under /players (e.g. public/players/{slug}.png headshots, also fetched
+  // internally by the /_next/image optimizer) match "/players/:slug" but are not pages.
+  if (PLAYER_STATIC_FILE.test(pathname)) return NextResponse.next();
 
   // Unknown player slugs: rewrite to an unmatched path so the themed root
   // not-found page renders with a real 404 status (page streams otherwise).
