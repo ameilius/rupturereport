@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { connection } from "next/server";
-import { initials, isCustomUpload, localImage, teamColors, textOn } from "@/lib/images";
+import { contrast, initials, isCustomUpload, localImage, teamColors, textOn } from "@/lib/images";
+import { bioLine } from "@/lib/format";
 import { readUpload } from "@/lib/uploads";
 import { STAGE_LABELS, formatInjuryType, getPlayerBySlug } from "@/lib/players";
 
@@ -28,6 +29,7 @@ export default async function Image({
   let logoPath: string | null = null;
   let injury = "ACL / Achilles";
   let stage = "Recovery tracker";
+  let bio: string | null = null;
   try {
     const data = await getPlayerBySlug(slug);
     if (data) {
@@ -38,6 +40,7 @@ export default async function Image({
       teamAbbr = data.player.team?.abbreviation ?? null;
       headshotPath = data.player.headshotPath;
       logoPath = data.player.team?.logoPath ?? null;
+      bio = bioLine(data.player);
       const i = data.injuries[0];
       if (i) {
         injury = `${formatInjuryType(i.injuryType)} tear · ${i.season} season`;
@@ -64,6 +67,7 @@ export default async function Image({
   }
   const [headshotSrc, logoSrc] = await Promise.all([dataUrl(headshotPath), dataUrl(logoPath)]);
   const [primary, secondary] = teamColors(teamAbbr);
+  const accent = contrast(primary, "#121821") >= contrast(secondary, "#121821") ? primary : secondary;
 
   let iconSrc: string | null = null;
   try {
@@ -140,6 +144,24 @@ export default async function Image({
             >
               {logoSrc ? <img src={logoSrc} width={48} height={48} alt="" style={{ marginRight: 16 }} /> : null}
               {team}
+            </div>
+          ) : null}
+          {bio ? (
+            <div
+              style={{
+                display: "flex",
+                alignSelf: "flex-start",
+                fontSize: 30,
+                fontWeight: 600,
+                color: "#E6EDF3",
+                marginTop: 18,
+                padding: "8px 18px",
+                borderRadius: 10,
+                background: "#121821",
+                borderLeft: `6px solid ${accent}`,
+              }}
+            >
+              {bio}
             </div>
           ) : null}
         </div>

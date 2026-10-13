@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
-import { formatDate, humanize } from "@/lib/format";
+import { bioLine, formatDate, humanize } from "@/lib/format";
 import {
   STAGE_LABELS,
   formatInjuryType,
@@ -44,7 +44,8 @@ function describe(d: PlayerDetail): { title: string; description: string } {
     : "";
   const earlier = injuries.length - 1;
   const earlierBit = earlier > 0 ? ` Includes ${earlier} earlier tear${earlier === 1 ? "" : "s"} (${injuries.slice(1).map((i) => `${formatInjuryType(i.injuryType)}, ${i.season} season`).join("; ")}).` : "";
-  const description = `${player.fullName}${teamBit} ${type} tear${dateBit}: recovery timeline, surgery, return-to-play updates, stadium and turf details.${stageBit}${earlierBit}`;
+  const bio = bioLine(player);
+  const description = `${player.fullName}${teamBit} ${type} tear${dateBit}: recovery timeline, surgery, return-to-play updates, stadium and turf details.${stageBit}${earlierBit}${bio ? ` Bio: ${bio}.` : ""}`;
   return { title, description };
 }
 
@@ -507,18 +508,4 @@ function RecoveryTimeline({ injury, primary = false }: { injury: Injury; primary
       )}
     </section>
   );
-}
-
-function bioLine(p: { heightIn: number | null; weightLb: number | null; dob: string | null }): string | null {
-  const parts: string[] = [];
-  if (p.heightIn) parts.push(`${Math.floor(p.heightIn / 12)}\u2032${p.heightIn % 12}\u2033`);
-  if (p.weightLb) parts.push(`${p.weightLb} lb`);
-  if (p.dob) {
-    const [y, m, d] = p.dob.slice(0, 10).split("-").map(Number);
-    const now = new Date();
-    let age = now.getUTCFullYear() - y;
-    if (now.getUTCMonth() + 1 < m || (now.getUTCMonth() + 1 === m && now.getUTCDate() < d)) age--;
-    if (age > 0 && age < 60) parts.push(`Age ${age}`);
-  }
-  return parts.length ? parts.join(" · ") : null;
 }
