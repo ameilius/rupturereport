@@ -82,7 +82,7 @@ export default function StatStrip({ stats }: { stats: StatItem[] }) {
   return (
     <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
       {stats.map((x) => (
-        <div key={x.label} className="rounded-xl border border-border bg-surface p-3 sm:p-4">
+        <div key={x.label} className="glass lift rounded-xl border p-3 sm:p-4">
           <dt className="text-xs uppercase tracking-wider text-muted">{x.label}</dt>
           <dd className={`mt-1 flex items-center gap-2 text-2xl font-bold ${x.tone ?? ""}`}>
             <CountUp value={x.value} num={x.num} suffix={x.suffix} />

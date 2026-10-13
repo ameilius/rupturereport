@@ -272,7 +272,7 @@ async function PlayerContent({ params }: Props) {
       {injuries[0] && (() => {
         const latest = injuries[0].updates.at(-1);
         return (
-          <section aria-labelledby="recovery-progress" className="mt-6 rounded-2xl border border-border bg-surface p-5 sm:p-6">
+          <section aria-labelledby="recovery-progress" className="glass lift mt-6 rounded-2xl border p-5 sm:p-6">
             <h2 id="recovery-progress" className="text-xs font-semibold uppercase tracking-wider text-muted">
               Recovery progress{injuries.length > 1 ? ` · latest ${formatInjuryType(injuries[0].injuryType)} injury` : ""}
             </h2>
@@ -339,7 +339,7 @@ function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boo
   return (
     <article
       aria-labelledby={`injury-${injury.id}`}
-      className="rounded-2xl border border-border border-l-4 bg-surface p-5 sm:p-8"
+      className="glass lift rounded-2xl border border-l-4 p-5 sm:p-8"
       style={{ borderLeftColor: "var(--accent)" }}
     >
       <div className="flex flex-wrap items-center gap-3">

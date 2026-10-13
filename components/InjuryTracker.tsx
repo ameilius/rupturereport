@@ -138,7 +138,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
         </p>
       ) : (
         <>
-          <div className="mt-4 hidden overflow-x-auto rounded-xl border border-border md:block">
+          <div className="glass mt-4 hidden overflow-x-auto rounded-xl border md:block">
             <table className="w-full text-left text-sm">
               <thead className="bg-surface text-xs uppercase tracking-wider text-muted">
                 <tr>
@@ -154,9 +154,9 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-surface/60">
+                  <tr key={r.id} className="row-accent">
                     <td className="px-4 py-2.5 font-medium">
-                      <Link href={`/players/${r.slug}`} className="flex items-center gap-3 hover:text-teal">
+                      <Link href={`/players/${r.slug}`} className="row-name flex items-center gap-3 hover:text-teal">
                         <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={32} />
                         {r.name}
                       </Link>
@@ -184,7 +184,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
           <ul className="mt-4 space-y-3 md:hidden">
             {filtered.map((r) => (
               <li key={r.id}>
-                <Link href={`/players/${r.slug}`} className="block rounded-xl border border-border bg-surface p-4 active:bg-border/40">
+                <Link href={`/players/${r.slug}`} className="glass block rounded-xl border p-4 active:bg-border/40">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={44} />
