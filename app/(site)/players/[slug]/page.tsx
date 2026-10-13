@@ -120,6 +120,7 @@ async function PlayerContent({ params }: Props) {
   const { player, injuries, lastModified } = data;
   const { title, description } = describe(data);
   const url = `${siteUrl}/players/${player.slug}`;
+  const bio = bioLine(player);
   const [tp, ts] = teamColors(player.team?.abbreviation ?? null);
   // Most visible team colour on the dark background, for thin accents.
   const accent = contrast(tp, "#0B0F14") >= contrast(ts, "#0B0F14") ? tp : ts;
@@ -184,6 +185,8 @@ async function PlayerContent({ params }: Props) {
         ...(personImage ? { image: personImage } : {}),
         ...(player.position ? { jobTitle: `NFL ${player.position}` } : {}),
         ...(player.dob ? { birthDate: player.dob.slice(0, 10) } : {}),
+        ...(player.heightIn ? { height: { "@type": "QuantitativeValue", value: player.heightIn, unitCode: "INH", unitText: "in" } } : {}),
+        ...(player.weightLb ? { weight: { "@type": "QuantitativeValue", value: player.weightLb, unitCode: "LBR", unitText: "lb" } } : {}),
         ...(player.team
           ? {
               memberOf: {
@@ -256,6 +259,7 @@ async function PlayerContent({ params }: Props) {
           {[player.position, player.team?.name].filter(Boolean).join(" · ") ||
             "NFL"}
         </p>
+        {bio && <p className="mt-1.5 text-sm text-text/60" data-bio>{bio}</p>}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           {lastModified && (
             <p className="text-sm text-text/70">
@@ -503,4 +507,18 @@ function RecoveryTimeline({ injury, primary = false }: { injury: Injury; primary
       )}
     </section>
   );
+}
+
+function bioLine(p: { heightIn: number | null; weightLb: number | null; dob: string | null }): string | null {
+  const parts: string[] = [];
+  if (p.heightIn) parts.push(`${Math.floor(p.heightIn / 12)}\u2032${p.heightIn % 12}\u2033`);
+  if (p.weightLb) parts.push(`${p.weightLb} lb`);
+  if (p.dob) {
+    const [y, m, d] = p.dob.slice(0, 10).split("-").map(Number);
+    const now = new Date();
+    let age = now.getUTCFullYear() - y;
+    if (now.getUTCMonth() + 1 < m || (now.getUTCMonth() + 1 === m && now.getUTCDate() < d)) age--;
+    if (age > 0 && age < 60) parts.push(`Age ${age}`);
+  }
+  return parts.length ? parts.join(" · ") : null;
 }
