@@ -9,6 +9,7 @@ import { datasetJsonLd } from "@/lib/structured-data";
 import { formatDate } from "@/lib/format";
 import { trackerFaq } from "@/lib/summaries";
 import { computeStats, getTrackerRows, weeklySeries, type TrackerRow } from "@/lib/tracker";
+import SurfaceBreakdown from "@/components/SurfaceBreakdown";
 import StatStrip, { type StatItem } from "@/components/StatStrip";
 
 const siteUrl = "https://rupturereport.com";
@@ -191,6 +192,7 @@ async function TrackerData() {
         )}
       </p>
       <StatStrip stats={stats} />
+      <SurfaceBreakdown rows={rows} />
       <InjuryTracker rows={rows} />
       {faq.length > 0 && (
         <section aria-labelledby="faq-heading" className="mt-14">
