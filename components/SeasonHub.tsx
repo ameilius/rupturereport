@@ -51,21 +51,36 @@ export default async function SeasonHub({ season, info }: { season: number; info
     failed = true;
   }
 
-  const header = (
-    <header>
+  const shareProps = { url: pageUrl || SITE_URL, title: `${pageTitle} | Rupture Report`, text: description };
+  const grad = "bg-gradient-to-r from-teal to-rupture bg-clip-text text-transparent";
+  const renderHeader = (extra?: { updated: string | null }) => (
+    <header className="hero relative isolate pb-2">
+      <div aria-hidden="true" className="hero-bg pointer-events-none absolute -inset-x-6 -top-10 -z-10 h-[150%]" />
       <div className="flex items-center justify-between gap-3">
-        <SeasonSwitcher season={season} current={info.current} seasons={info.listed} />
-        <ShareButton url={pageUrl || SITE_URL} title={`${pageTitle} | Rupture Report`} text={description} />
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+          <span className="flex items-center gap-2">
+            <span aria-hidden="true" className={`live-dot ${isCurrent ? "" : "live-dot--off"}`} />
+            <SeasonSwitcher season={season} current={info.current} seasons={info.listed} />
+          </span>
+          {extra?.updated && (
+            <span className="rounded-full border border-border bg-surface/80 px-2.5 py-0.5 text-[11px] text-muted">
+              Updated <time dateTime={extra.updated}>{formatDate(extra.updated)}</time>
+            </span>
+          )}
+        </div>
+        <ShareButton {...shareProps} compact />
       </div>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
-        {isCurrent ? <>{LEAGUE} ACL &amp; Achilles Tear Tracker</> : <>{season} {LEAGUE} ACL &amp; Achilles Tears</>}
+      <h1 className="mt-3 text-balance text-3xl font-bold tracking-tight sm:text-5xl">
+        {isCurrent ? <>{LEAGUE} </> : <>{season} {LEAGUE} </>}
+        <span className={grad}>ACL</span> &amp; <span className={grad}>Achilles</span>{" "}
+        {isCurrent ? "Tear Tracker" : "Tears"}
       </h1>
-      <p className="mt-2 text-muted">
+      <p className="mt-3 text-muted">
         Every torn ACL and Achilles of the {season} season, with surface, game context and recovery status.{" "}
         <Link href="/players" className="text-teal hover:underline">All players →</Link>
       </p>
       {!isCurrent && (
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-3 text-sm text-muted">
           Archive season.{" "}
           <Link href="/" className="text-teal hover:underline">Go to the current {info.current} season →</Link>
         </p>
@@ -76,7 +91,7 @@ export default async function SeasonHub({ season, info }: { season: number; info
   if (failed || !carry) {
     return (
       <>
-        {header}
+        {renderHeader()}
         <p className="mt-8 rounded-xl border border-border bg-surface p-6 text-muted">
           Tear data is temporarily unavailable. Please check back shortly.
         </p>
@@ -136,8 +151,10 @@ export default async function SeasonHub({ season, info }: { season: number; info
       {isCurrent && <script type="application/ld+json" dangerouslySetInnerHTML={ld(organizationJsonLd)} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={ld({ "@context": "https://schema.org", ...dataset })} />
       {faq.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={ld(faqLd)} />}
-      {header}
-      <p className="mt-4 max-w-3xl text-sm text-muted" data-summary>
+      {renderHeader({
+        updated: lastModified,
+      })}
+      <p className="sr-only" data-summary>
         Rupture Report tracks {s.total} torn ACL and Achilles tear{s.total === 1 ? "" : "s"} in the {season} {LEAGUE} season:{" "}
         {s.acl} ACL and {s.achilles} Achilles across {teams} team{teams === 1 ? "" : "s"}.
         {carry.prevPlayers > 0 && (

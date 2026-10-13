@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-type Props = { url: string; title: string; text?: string; className?: string };
+type Props = { url: string; title: string; text?: string; className?: string; compact?: boolean };
 
 const ic = "h-4 w-4 shrink-0";
 const Icons = {
@@ -48,7 +48,7 @@ const Icons = {
   ),
 };
 
-export default function ShareButton({ url, title, text, className = "" }: Props) {
+export default function ShareButton({ url, title, text, className = "", compact = false }: Props) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -130,10 +130,10 @@ export default function ShareButton({ url, title, text, className = "" }: Props)
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text transition-colors hover:border-teal hover:text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+        className={`inline-flex items-center gap-2 rounded-full ${compact ? "max-sm:p-2" : ""} border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text transition-colors hover:border-teal hover:text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal`}
       >
         {Icons.share}
-        <span>Share</span>
+        <span className={compact ? "max-sm:sr-only" : undefined}>Share</span>
       </button>
       {open && (
         <div
