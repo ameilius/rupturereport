@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { defaultOgImage } from "@/lib/og";
-import { DATA_LICENSE_URL, SITE_NAME, SITE_URL, organizationRef } from "@/lib/structured-data";
+import { DATA_LICENSE_URL, SITE_NAME, SITE_URL, organizationRef, breadcrumbJsonLd } from "@/lib/structured-data";
 
 const title = "Terms & Data License";
 const description =
@@ -29,6 +29,12 @@ const jsonLd = {
 export default function TermsPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd([["Home", "/"], ["Terms & data license", "/terms"]])).replace(/</g, "\\u003c"),
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

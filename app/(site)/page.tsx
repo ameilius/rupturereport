@@ -6,6 +6,8 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import InjuryTracker from "@/components/InjuryTracker";
 import { datasetJsonLd } from "@/lib/structured-data";
+import { formatDate } from "@/lib/format";
+import { trackerFaq } from "@/lib/summaries";
 import { computeStats, getTrackerRows, type TrackerRow } from "@/lib/tracker";
 
 const siteUrl = "https://rupturereport.com";
@@ -60,24 +62,6 @@ const jsonLd = {
       description,
       inLanguage: "en-US",
     },
-    datasetJsonLd({
-      id: `${siteUrl}/#dataset`,
-      name: "NFL ACL & Achilles Injuries 2026",
-      description:
-        "Tracked torn ACL and Achilles injuries across the 2026 NFL offseason, preseason and regular season, including injury date, team, position, game context, playing surface, mechanism and recovery stage.",
-      url: siteUrl,
-      league: "NFL",
-      season: "2026",
-      keywords: [
-        "NFL ACL injuries 2026",
-        "NFL Achilles injuries 2026",
-        "torn ACL",
-        "torn Achilles",
-        "artificial turf",
-        "natural grass",
-        "injury recovery",
-      ],
-    }),
   ],
 };
 
@@ -129,6 +113,38 @@ async function TrackerData() {
     );
   }
   const s = computeStats(rows);
+  const lastModified = rows.reduce<string | null>((m, r) => (r.lastModified && (!m || r.lastModified > m) ? r.lastModified : m), null);
+  const dataset = datasetJsonLd({
+      id: `${siteUrl}/#dataset`,
+      name: "NFL ACL & Achilles Injuries 2026",
+      description:
+        "Tracked torn ACL and Achilles injuries across the 2026 NFL offseason, preseason and regular season, including injury date, team, position, game context, playing surface, mechanism and recovery stage.",
+      url: siteUrl,
+      league: "NFL",
+      season: "2026",
+      dateModified: lastModified ?? undefined,
+      keywords: [
+        "NFL ACL injuries 2026",
+        "NFL Achilles injuries 2026",
+        "torn ACL",
+        "torn Achilles",
+        "artificial turf",
+        "natural grass",
+        "injury recovery",
+      ],
+    });
+  const faq = trackerFaq(rows, "NFL", "2026");
+  const teams = new Set(rows.map((r) => r.team).filter(Boolean)).size;
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${siteUrl}/#faq`,
+    mainEntity: faq.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
   const stats: { label: string; value: string; sub?: string; tone?: string }[] = [
     { label: "Tracked tears", value: String(s.total) },
     { label: "ACL", value: String(s.acl), tone: "text-teal" },
@@ -146,6 +162,27 @@ async function TrackerData() {
   ];
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({ "@context": "https://schema.org", ...dataset }).replace(/</g, "\\u003c"),
+        }}
+      />
+      {faq.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd).replace(/</g, "\\u003c") }}
+        />
+      )}
+      <p className="mt-4 max-w-3xl text-sm text-muted" data-summary>
+        Rupture Report tracks {s.total} torn ACL and Achilles injuries in
+        the 2026 NFL season: {s.acl} ACL and {s.achilles} Achilles tears across {teams} teams.
+        {lastModified && (
+          <>
+            {" "}Last updated <time dateTime={lastModified}>{formatDate(lastModified)}</time>.
+          </>
+        )}
+      </p>
       <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {stats.map((x) => (
           <div key={x.label} className="rounded-xl border border-border bg-surface p-3 sm:p-4">
@@ -156,6 +193,19 @@ async function TrackerData() {
         ))}
       </dl>
       <InjuryTracker rows={rows} />
+      {faq.length > 0 && (
+        <section aria-labelledby="faq-heading" className="mt-14">
+          <h2 id="faq-heading" className="text-xl font-bold sm:text-2xl">Frequently asked questions</h2>
+          <dl className="mt-4 divide-y divide-border rounded-xl border border-border bg-surface">
+            {faq.map((f) => (
+              <div key={f.q} className="p-4 sm:p-5">
+                <dt className="font-semibold">{f.q}</dt>
+                <dd className="mt-1.5 text-sm text-muted">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
     </>
   );
 }

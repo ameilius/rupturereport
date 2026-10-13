@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   },
   description: siteDescription,
   applicationName: siteName,
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: siteUrl,
@@ -31,7 +30,20 @@ export const metadata: Metadata = {
     title: `${siteName} | NFL ACL & Achilles Injury Tracker`,
     description: siteDescription,
   },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    "max-snippet": -1,
+    "max-image-preview": "large",
+    "max-video-preview": -1,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({

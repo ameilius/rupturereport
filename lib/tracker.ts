@@ -18,11 +18,14 @@ export interface TrackerRow {
   mechanism: string | null;
   isGame: boolean;
   opponent: string | null;
+  opponentName: string | null;
   homeAway: string | null;
   stadium: string | null;
   surface: string | null;
   surfaceBrand: string | null;
   stage: string | null;
+  stageDate: string | null;
+  lastModified: string | null;
 }
 
 function iso(v: unknown): string | null {
@@ -36,9 +39,13 @@ export async function getTrackerRows(): Promise<TrackerRow[]> {
     `SELECT i.id, p.slug, p.first_name, p.last_name, p.position,
             t.abbreviation team, t.name team_name, t.logo_path, p.headshot_path,
             i.injury_type, i.injury_date, i.week, i.phase, i.mechanism, i.home_away,
-            o.abbreviation opponent, s.name stadium, s.surface_type, s.surface_brand,
+            o.abbreviation opponent, o.name opponent_name, s.name stadium, s.surface_type, s.surface_brand,
             (SELECT u.stage FROM progress_updates u WHERE u.injury_id = i.id
-              ORDER BY u.update_date DESC, u.id DESC LIMIT 1) stage
+              ORDER BY u.update_date DESC, u.id DESC LIMIT 1) stage,
+            (SELECT u.update_date FROM progress_updates u WHERE u.injury_id = i.id
+              ORDER BY u.update_date DESC, u.id DESC LIMIT 1) stage_date,
+            GREATEST(p.updated_at, i.updated_at,
+              COALESCE((SELECT MAX(u.created_at) FROM progress_updates u WHERE u.injury_id = i.id), i.updated_at)) last_modified
        FROM injuries i
        JOIN players p ON p.id = i.player_id
        LEFT JOIN teams t ON t.id = p.team_id
@@ -62,11 +69,14 @@ export async function getTrackerRows(): Promise<TrackerRow[]> {
     mechanism: r.mechanism ?? null,
     isGame: r.stadium != null || r.opponent != null,
     opponent: r.opponent ?? null,
+    opponentName: r.opponent_name ?? null,
     homeAway: r.home_away ?? null,
     stadium: r.stadium ?? null,
     surface: r.surface_type ?? null,
     surfaceBrand: r.surface_brand ?? null,
     stage: r.stage ?? null,
+    stageDate: iso(r.stage_date),
+    lastModified: r.last_modified ? new Date(r.last_modified).toISOString() : null,
   }));
 }
 

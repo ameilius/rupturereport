@@ -54,6 +54,7 @@ export interface Player {
   heightIn: number | null;
   weightLb: number | null;
   updatedAt: string | null;
+  createdAt: string | null;
   headshotPath: string | null;
   team: Team | null;
 }
@@ -136,7 +137,7 @@ export async function getPlayerBySlug(
 ): Promise<PlayerDetail | null> {
   const [playerRows] = await pool.query<RowDataPacket[]>(
     `SELECT p.id, p.first_name, p.last_name, p.slug, p.position, p.dob,
-            p.height_in, p.weight_lb, p.updated_at, p.headshot_path,
+            p.height_in, p.weight_lb, p.updated_at, p.created_at, p.headshot_path,
             t.id AS team_id, t.abbreviation AS team_abbr, t.name AS team_name,
             t.slug AS team_slug, t.logo_path AS team_logo
        FROM players p
@@ -159,6 +160,7 @@ export async function getPlayerBySlug(
     heightIn: r.height_in ?? null,
     weightLb: r.weight_lb ?? null,
     updatedAt: toIsoDate(r.updated_at),
+    createdAt: toIsoDate(r.created_at),
     headshotPath: gated(r.headshot_path),
     team: r.team_id
       ? {
@@ -249,9 +251,11 @@ export async function getAllPlayerSlugs(): Promise<
 > {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT p.slug, GREATEST(p.updated_at,
-              COALESCE(MAX(i.updated_at), p.updated_at)) AS last_modified
+              COALESCE(MAX(i.updated_at), p.updated_at),
+              COALESCE(MAX(u.created_at), p.updated_at)) AS last_modified
        FROM players p
        JOIN injuries i ON i.player_id = p.id
+       LEFT JOIN progress_updates u ON u.injury_id = i.id
       GROUP BY p.id, p.slug, p.updated_at
       ORDER BY p.slug`,
   );

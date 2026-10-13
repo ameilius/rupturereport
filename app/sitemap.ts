@@ -8,13 +8,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [
     {
       url: siteUrl,
-      lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
     },
     {
       url: `${siteUrl}/players`,
-      lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
     },
@@ -33,6 +31,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     await connection();
     const players = await getAllPlayerSlugs();
+    // Home + players index change whenever any player record does.
+    const newest = players.reduce<string | null>(
+      (m, p) => (p.lastModified && (!m || new Date(p.lastModified) > new Date(m)) ? p.lastModified : m),
+      null,
+    );
+    if (newest) {
+      entries[0].lastModified = new Date(newest);
+      entries[1].lastModified = new Date(newest);
+    }
     for (const p of players) {
       entries.push({
         url: `${siteUrl}/players/${p.slug}`,

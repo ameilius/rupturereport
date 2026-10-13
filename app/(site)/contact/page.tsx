@@ -1,3 +1,4 @@
+import { breadcrumbJsonLd } from "@/lib/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmailLink } from "@/components/EmailLink";
@@ -41,6 +42,12 @@ const jsonLd = {
 export default function ContactPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd([["Home", "/"], ["Contact", "/contact"]])).replace(/</g, "\\u003c"),
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

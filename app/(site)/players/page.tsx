@@ -1,3 +1,4 @@
+import { breadcrumbJsonLd } from "@/lib/structured-data";
 import { defaultOgImage } from "@/lib/og";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -27,6 +28,12 @@ export const metadata: Metadata = {
 export default function PlayersPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd([["Home", "/"], ["Players", "/players"]])).replace(/</g, "\\u003c"),
+        }}
+      />
       <nav aria-label="Breadcrumb" className="text-sm text-muted">
         <Link href="/" className="hover:text-teal">
           Home

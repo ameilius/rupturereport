@@ -14,6 +14,9 @@ import {
   type Injury,
   type PlayerDetail,
 } from "@/lib/players";
+import { localImage } from "@/lib/images";
+import { organizationRef } from "@/lib/structured-data";
+import { conditionAnatomy, conditionName, injurySentence, playerInjuryFacts } from "@/lib/summaries";
 
 const siteUrl = "https://rupturereport.com";
 
@@ -114,6 +117,21 @@ async function PlayerContent({ params }: Props) {
   const { title, description } = describe(data);
   const url = `${siteUrl}/players/${player.slug}`;
   const shareType = injuries[0] ? formatInjuryType(injuries[0].injuryType) : "Injury";
+  const summaries = injuries.map((i) => injurySentence(playerInjuryFacts(player, i)));
+  const headshot = localImage(player.headshotPath);
+  const personImage = headshot ? `${siteUrl}${headshot}` : null;
+  const ogImage = `${url}/opengraph-image`;
+  const published = player.createdAt ?? null;
+  const conditions = injuries.map((i) => {
+    const anatomy = conditionAnatomy(i.injuryType);
+    return {
+      "@type": "MedicalCondition",
+      "@id": `${url}#injury-${i.id}`,
+      name: conditionName(i.injuryType),
+      ...(anatomy ? { associatedAnatomy: { "@type": "AnatomicalStructure", name: anatomy } } : {}),
+      description: injurySentence(playerInjuryFacts(player, i)),
+    };
+  });
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -125,10 +143,29 @@ async function PlayerContent({ params }: Props) {
         name: title,
         description,
         isPartOf: { "@type": "WebSite", name: "Rupture Report", url: siteUrl },
-        about: { "@id": `${url}#person` },
+        about: [{ "@id": `${url}#person` }, ...conditions.map((c) => ({ "@id": c["@id"] }))],
         breadcrumb: { "@id": `${url}#breadcrumb` },
+        primaryImageOfPage: { "@type": "ImageObject", url: ogImage },
+        ...(published ? { datePublished: published } : {}),
         ...(lastModified ? { dateModified: lastModified } : {}),
       },
+      {
+        "@type": "Article",
+        "@id": `${url}#article`,
+        headline: title.slice(0, 110),
+        description,
+        url,
+        mainEntityOfPage: { "@id": `${url}#webpage` },
+        image: [ogImage, ...(personImage ? [personImage] : [])],
+        ...(published ? { datePublished: published } : {}),
+        ...(lastModified ? { dateModified: lastModified } : {}),
+        author: organizationRef,
+        publisher: organizationRef,
+        about: [{ "@id": `${url}#person` }, ...conditions.map((c) => ({ "@id": c["@id"] }))],
+        ...(summaries[0] ? { abstract: summaries[0] } : {}),
+        inLanguage: "en-US",
+      },
+      ...conditions,
       {
         "@type": "Person",
         "@id": `${url}#person`,
@@ -136,6 +173,7 @@ async function PlayerContent({ params }: Props) {
         givenName: player.firstName,
         familyName: player.lastName,
         url,
+        ...(personImage ? { image: personImage } : {}),
         ...(player.position ? { jobTitle: `NFL ${player.position}` } : {}),
         ...(player.dob ? { birthDate: player.dob.slice(0, 10) } : {}),
         ...(player.team
@@ -212,6 +250,13 @@ async function PlayerContent({ params }: Props) {
         </div>
         </div>
       </header>
+      {summaries.length > 0 && (
+        <div className="mt-6 space-y-2 text-base leading-relaxed text-text" data-summary>
+          {summaries.map((t, idx) => (
+            <p key={idx}>{t}</p>
+          ))}
+        </div>
+      )}
 
       {injuries.length === 0 ? (
         <p className="mt-10 rounded-xl border border-border bg-surface p-6 text-muted">

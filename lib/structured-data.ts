@@ -9,7 +9,22 @@ export const organizationRef = {
   "@id": `${SITE_URL}/#organization`,
   name: SITE_NAME,
   url: SITE_URL,
+  logo: { "@type": "ImageObject", url: `${SITE_URL}/brand/logo-square-1024.png`, width: 1024, height: 1024 },
 };
+
+/** BreadcrumbList JSON-LD from [name, absolute-or-relative path] pairs. */
+export function breadcrumbJsonLd(items: [string, string][]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map(([name, path], i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name,
+      item: path.startsWith("http") ? path : `${SITE_URL}${path}`,
+    })),
+  };
+}
 
 export const dataCatalog = {
   "@type": "DataCatalog",
