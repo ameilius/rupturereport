@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { getAllPlayerSlugs } from "@/lib/players";
+import { getSeasonInfo } from "@/lib/seasons";
 
 const siteUrl = "https://rupturereport.com";
 
@@ -39,6 +40,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (newest) {
       entries[0].lastModified = new Date(newest);
       entries[1].lastModified = new Date(newest);
+    }
+    // Archive season hubs (the current season is "/", so it is not listed twice).
+    const info = await getSeasonInfo();
+    for (const y of info.withData.filter((y) => y !== info.current)) {
+      entries.push({ url: `${siteUrl}/${y}`, changeFrequency: "weekly", priority: 0.7 });
     }
     for (const p of players) {
       entries.push({

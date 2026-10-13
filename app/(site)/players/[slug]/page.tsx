@@ -32,8 +32,8 @@ async function loadPlayer(slug: string): Promise<PlayerDetail | null> {
 function describe(d: PlayerDetail): { title: string; description: string } {
   const { player, injuries } = d;
   const injury = injuries[0];
-  const type = injury ? formatInjuryType(injury.injuryType) : "Injury";
-  const title = `${player.fullName} ${type} Injury & Recovery Tracker`;
+  const type = injury ? formatInjuryType(injury.injuryType) : "Major";
+  const title = `${player.fullName} ${type} Tear & Recovery Tracker`;
   const teamBit = player.team ? ` (${player.team.name})` : "";
   const latest = injury?.updates.at(-1);
   const stageBit = latest
@@ -42,7 +42,9 @@ function describe(d: PlayerDetail): { title: string; description: string } {
   const dateBit = injury?.injuryDate
     ? ` suffered on ${formatDate(injury.injuryDate)}`
     : "";
-  const description = `${player.fullName}${teamBit} ${type} injury${dateBit}: recovery timeline, surgery, return-to-play updates, stadium and turf details.${stageBit}`;
+  const earlier = injuries.length - 1;
+  const earlierBit = earlier > 0 ? ` Includes ${earlier} earlier tear${earlier === 1 ? "" : "s"} (${injuries.slice(1).map((i) => `${formatInjuryType(i.injuryType)}, ${i.season} season`).join("; ")}).` : "";
+  const description = `${player.fullName}${teamBit} ${type} tear${dateBit}: recovery timeline, surgery, return-to-play updates, stadium and turf details.${stageBit}${earlierBit}`;
   return { title, description };
 }
 
@@ -133,7 +135,7 @@ async function PlayerContent({ params }: Props) {
     return {
       "@type": "MedicalCondition",
       "@id": `${url}#injury-${i.id}`,
-      name: conditionName(i.injuryType),
+      name: `${conditionName(i.injuryType)}, ${i.season} season`,
       ...(anatomy ? { associatedAnatomy: { "@type": "AnatomicalStructure", name: anatomy } } : {}),
       description: injurySentence(playerInjuryFacts(player, i)),
     };
@@ -168,7 +170,7 @@ async function PlayerContent({ params }: Props) {
         author: organizationRef,
         publisher: organizationRef,
         about: [{ "@id": `${url}#person` }, ...conditions.map((c) => ({ "@id": c["@id"] }))],
-        ...(summaries[0] ? { abstract: summaries[0] } : {}),
+        ...(summaries.length ? { abstract: summaries.join(" ") } : {}),
         inLanguage: "en-US",
       },
       ...conditions,
@@ -274,7 +276,7 @@ async function PlayerContent({ params }: Props) {
         return (
           <section aria-labelledby="recovery-progress" className="glass lift mt-6 rounded-2xl border p-5 sm:p-6">
             <h2 id="recovery-progress" className="text-xs font-semibold uppercase tracking-wider text-muted">
-              Recovery progress{injuries.length > 1 ? ` · latest ${formatInjuryType(injuries[0].injuryType)} injury` : ""}
+              Recovery progress{injuries.length > 1 ? ` · latest tear (${formatInjuryType(injuries[0].injuryType)}, ${injuries[0].season} season)` : ""}
             </h2>
             <div className="mt-4">
               <RecoveryStepper
@@ -288,9 +290,14 @@ async function PlayerContent({ params }: Props) {
       })()}
       {summaries.length > 0 && (
         <div className="mt-6 space-y-2 text-base leading-relaxed text-text" data-summary>
-          {summaries.map((t, idx) => (
-            <p key={idx}>{t}</p>
-          ))}
+          <p>{summaries[0]}</p>
+          {summaries.length > 1 && (
+            <p className="text-muted">
+              Earlier: {summaries.slice(1).map((t, idx) => (
+                <span key={idx}>{idx > 0 && " "}{injuries[idx + 1].season} season: {t}</span>
+              ))}
+            </p>
+          )}
         </div>
       )}
 
@@ -300,9 +307,17 @@ async function PlayerContent({ params }: Props) {
         </p>
       ) : (
         <div className="mt-10 space-y-10">
-          {injuries.map((injury, idx) => (
-            <InjuryCard key={injury.id} injury={injury} primary={idx === 0} />
-          ))}
+          <InjuryCard injury={injuries[0]} primary />
+          {injuries.length > 1 && (
+            <section aria-labelledby="earlier-tears" className="space-y-10">
+              <h2 id="earlier-tears" className="border-l-4 pl-3 text-lg font-semibold" style={{ borderLeftColor: "var(--accent)" }}>
+                Earlier tears
+              </h2>
+              {injuries.slice(1).map((injury) => (
+                <InjuryCard key={injury.id} injury={injury} />
+              ))}
+            </section>
+          )}
         </div>
       )}
       </div>
@@ -347,7 +362,8 @@ function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boo
           {type}
         </span>
         <h2 id={`injury-${injury.id}`} className="text-xl font-semibold underline decoration-2 underline-offset-8" style={{ textDecorationColor: "var(--accent)" }}>
-          {type} injury
+          {type} tear
+          {injury.season != null && <> · {injury.season} season</>}
           {injury.injuryDate && (
             <>
               {" "}

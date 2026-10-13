@@ -30,6 +30,7 @@ import {
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { deleteUpload, storeUpload } from "@/lib/uploads";
+import { getCurrentSeason, invalidateSeasonCache, parseSeason } from "@/lib/seasons";
 
 // ---------- helpers ----------
 function str(fd: FormData, k: string, max = 255): string | null {
@@ -64,6 +65,10 @@ function revalidatePublic(playerSlug?: string | null) {
   revalidatePath("/players");
   revalidatePath("/sitemap.xml");
   revalidatePath("/");
+  revalidatePath("/[season]", "page");
+  revalidatePath("/llms.txt");
+  revalidatePath("/llms-full.txt");
+  invalidateSeasonCache();
   if (playerSlug) {
     revalidatePath(`/players/${playerSlug}`);
     revalidatePath(`/players/${playerSlug}/opengraph-image`);
@@ -187,7 +192,7 @@ export async function saveInjuryAction(fd: FormData) {
     player_id: playerId,
     injury_type: injuryType,
     injury_date: injuryDate,
-    season: int(fd, "season") ?? 2026,
+    season: parseSeason(str(fd, "season")) ?? (await getCurrentSeason()),
     week: int(fd, "week"),
     stadium_id: int(fd, "stadium_id"),
     home_away: oneOf(fd, "home_away", HOME_AWAY),
@@ -307,4 +312,17 @@ export async function removeImageAction(fd: FormData) {
   await deleteUpload(current);
   revalidateImage(kind, slug);
   redirect(`${back}?saved=1`);
+}
+
+// ---------- settings ----------
+export async function saveSettingsAction(fd: FormData) {
+  await requireAdmin();
+  const season = parseSeason(str(fd, "current_season"));
+  if (season == null) fail("/admin/settings", "Current season must be a 4-digit year");
+  await exec(
+    "INSERT INTO settings (k, v) VALUES ('current_season', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)",
+    [String(season)],
+  );
+  revalidatePublic();
+  redirect("/admin/settings?saved=1");
 }

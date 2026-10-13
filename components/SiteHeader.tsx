@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import CopyrightYear from "@/components/CopyrightYear";
 
 export function SiteHeader() {
   return (
@@ -44,7 +45,7 @@ export function SiteFooter() {
               <span className="font-semibold tracking-wide text-text">Rupture Report</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
-              Tracking every NFL ACL and Achilles tear of the 2026 season, from injury to return.
+              Tracking every NFL ACL and Achilles tear, season by season, from injury to return.
             </p>
           </div>
           <nav aria-label="Footer">
@@ -67,7 +68,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="mt-12 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Rupture Report</p>
+          <p>© <CopyrightYear /> Rupture Report</p>
           <p>Data from public team and league reports.</p>
         </div>
       </div>

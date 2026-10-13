@@ -90,3 +90,10 @@ CREATE TABLE IF NOT EXISTS injury_weather (
   conditions  VARCHAR(64) NULL,
   FOREIGN KEY (injury_id) REFERENCES injuries(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Site settings (key/value). Seeded by migration 0005 (current_season).
+CREATE TABLE IF NOT EXISTS settings (
+  k           VARCHAR(64) NOT NULL PRIMARY KEY,
+  v           VARCHAR(255) NULL,
+  updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

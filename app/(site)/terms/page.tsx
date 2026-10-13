@@ -5,7 +5,7 @@ import { DATA_LICENSE_URL, SITE_NAME, SITE_URL, organizationRef, breadcrumbJsonL
 
 const title = "Terms & Data License";
 const description =
-  "Rupture Report injury data is licensed under CC BY 4.0: reuse it freely with attribution to Rupture Report.";
+  "Rupture Report tear data is licensed under CC BY 4.0: reuse it freely with attribution to Rupture Report.";
 
 export const metadata: Metadata = {
   title,
@@ -47,7 +47,7 @@ export default function TermsPage() {
       <section className="mt-8 space-y-4 text-muted">
         <h2 className="text-xl font-semibold text-text">Data license: CC BY 4.0</h2>
         <p>
-          The injury data published on {SITE_NAME} (injury lists, dates, teams, game context, playing surface, mechanism
+          The tear data published on {SITE_NAME} (ACL and Achilles tear lists for every season, dates, teams, game context, playing surface, mechanism
           and recovery stages) is licensed under the{" "}
           <a href={DATA_LICENSE_URL} className="text-teal hover:underline" rel="license noopener" target="_blank">
             Creative Commons Attribution 4.0 International License (CC BY 4.0)

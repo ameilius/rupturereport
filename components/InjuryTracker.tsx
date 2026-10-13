@@ -18,10 +18,10 @@ const STAGE: Record<string, string> = {
 const sel =
   "rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal";
 
-function fmt(d: string | null) {
+function fmt(d: string | null, year = false) {
   if (!d) return "—";
   return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", {
-    month: "short", day: "numeric", timeZone: "UTC",
+    month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}), timeZone: "UTC",
   });
 }
 
@@ -50,7 +50,23 @@ function surfaceLabel(r: TrackerRow) {
   return r.surface.charAt(0).toUpperCase() + r.surface.slice(1);
 }
 
-export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
+export default function InjuryTracker({
+  rows,
+  filters = true,
+  heading = "Tear tracker",
+  showHeading = false,
+  idPrefix = "t",
+  showYear = false,
+  empty = "No tears tracked yet.",
+}: {
+  rows: TrackerRow[];
+  filters?: boolean;
+  heading?: string;
+  showHeading?: boolean;
+  idPrefix?: string;
+  showYear?: boolean;
+  empty?: string;
+}) {
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const [team, setTeam] = useState("");
@@ -78,12 +94,13 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
   const active = q || type || team || surface || phase;
 
   return (
-    <section aria-labelledby="tracker-heading" className="mt-8">
-      <h2 id="tracker-heading" className="sr-only">Injury tracker</h2>
+    <section aria-labelledby={`${idPrefix}-heading`} className="mt-8">
+      <h2 id={`${idPrefix}-heading`} className={showHeading ? "text-xl font-bold sm:text-2xl" : "sr-only"}>{heading}</h2>
+      {filters && (
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <label className="sr-only" htmlFor="tq">Search players or teams</label>
+        <label className="sr-only" htmlFor={`${idPrefix}-tq`}>Search players or teams</label>
         <input
-          id="tq"
+          id={`${idPrefix}-tq`}
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -91,27 +108,27 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
           className={`${sel} w-full sm:w-64`}
         />
         <div className="grid grid-cols-2 gap-2 sm:flex">
-          <label className="sr-only" htmlFor="ft">Injury type</label>
-          <select id="ft" className={sel} value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="">All injuries</option>
+          <label className="sr-only" htmlFor={`${idPrefix}-ft`}>Tear type</label>
+          <select id={`${idPrefix}-ft`} className={sel} value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="">ACL & Achilles</option>
             <option value="ACL">ACL</option>
             <option value="Achilles">Achilles</option>
           </select>
-          <label className="sr-only" htmlFor="fteam">Team</label>
-          <select id="fteam" className={sel} value={team} onChange={(e) => setTeam(e.target.value)}>
+          <label className="sr-only" htmlFor={`${idPrefix}-fteam`}>Team</label>
+          <select id={`${idPrefix}-fteam`} className={sel} value={team} onChange={(e) => setTeam(e.target.value)}>
             <option value="">All teams</option>
             {teams.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
-          <label className="sr-only" htmlFor="fs">Surface</label>
-          <select id="fs" className={sel} value={surface} onChange={(e) => setSurface(e.target.value)}>
+          <label className="sr-only" htmlFor={`${idPrefix}-fs`}>Surface</label>
+          <select id={`${idPrefix}-fs`} className={sel} value={surface} onChange={(e) => setSurface(e.target.value)}>
             <option value="">All surfaces</option>
             <option value="artificial">Artificial</option>
             <option value="natural">Natural</option>
             <option value="hybrid">Hybrid</option>
             <option value="practice">Practice (no game)</option>
           </select>
-          <label className="sr-only" htmlFor="fp">Phase</label>
-          <select id="fp" className={sel} value={phase} onChange={(e) => setPhase(e.target.value)}>
+          <label className="sr-only" htmlFor={`${idPrefix}-fp`}>Phase</label>
+          <select id={`${idPrefix}-fp`} className={sel} value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value="">All phases</option>
             <option value="preseason">Offseason / preseason</option>
             <option value="regular">Regular season</option>
@@ -131,10 +148,11 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
           )}
         </p>
       </div>
+      )}
 
       {filtered.length === 0 ? (
         <p className="mt-6 rounded-xl border border-border bg-surface p-6 text-muted">
-          {rows.length === 0 ? "No injuries tracked yet." : "No injuries match these filters."}
+          {rows.length === 0 ? empty : "No tears match these filters."}
         </p>
       ) : (
         <>
@@ -145,7 +163,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
                   <th scope="col" className="px-4 py-3">Player</th>
                   <th scope="col" className="px-4 py-3">Team</th>
                   <th scope="col" className="px-4 py-3">Pos</th>
-                  <th scope="col" className="px-4 py-3">Injury</th>
+                  <th scope="col" className="px-4 py-3">Tear</th>
                   <th scope="col" className="px-4 py-3">Date</th>
                   <th scope="col" className="px-4 py-3">Stage</th>
                   <th scope="col" className="px-4 py-3">Game</th>
@@ -169,7 +187,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
                     </td>
                     <td className="px-4 py-3 text-muted">{r.position ?? "—"}</td>
                     <td className="px-4 py-3"><Badge type={r.injuryType} side={r.bodySide} /></td>
-                    <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate)}</time></td>
+                    <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate, showYear)}</time></td>
                     <td className="px-4 py-3 whitespace-nowrap"><MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted">{context(r)}</td>
                     <td className="px-4 py-3" title={r.stadium ? `${r.stadium}${r.surfaceBrand ? ` · ${r.surfaceBrand}` : ""}` : undefined}>
@@ -199,7 +217,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
                     <Badge type={r.injuryType} side={r.bodySide} />
                   </div>
                   <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                    <div><dt className="text-muted">Date</dt><dd>{fmt(r.injuryDate)}</dd></div>
+                    <div><dt className="text-muted">Date</dt><dd>{fmt(r.injuryDate, showYear)}</dd></div>
                     <div><dt className="text-muted">Where</dt><dd>{context(r)}</dd></div>
                     <div><dt className="text-muted">Surface</dt><dd>{surfaceLabel(r)}</dd></div>
                   </dl>

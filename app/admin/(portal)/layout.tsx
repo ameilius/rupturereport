@@ -6,6 +6,7 @@ const nav = [
   { href: "/admin/players", label: "Players" },
   { href: "/admin/stadiums", label: "Stadiums" },
   { href: "/admin/teams", label: "Teams" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {

@@ -7,7 +7,7 @@ import { defaultOgImage } from "@/lib/og";
 const siteUrl = "https://rupturereport.com";
 const title = "Contact";
 const description =
-  "Contact Rupture Report: send corrections, tips on NFL ACL and Achilles injuries, or data and media inquiries to contact@rupturereport.com.";
+  "Contact Rupture Report: send corrections, tips on NFL ACL and Achilles tears, or data and media inquiries to contact@rupturereport.com.";
 
 export const metadata: Metadata = {
   title,
@@ -57,7 +57,7 @@ export default function ContactPage() {
       </nav>
       <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-5xl">Contact</h1>
       <p className="mt-4 text-lg text-muted">
-        Rupture Report tracks every NFL ACL and Achilles tear of the 2026 season. We&apos;d like to hear from you if you have:
+        Rupture Report tracks every NFL ACL and Achilles tear, season by season. We&apos;d like to hear from you if you have:
       </p>
       <ul className="mt-6 space-y-3">
         <li className="rounded-xl border border-border bg-surface p-4">
@@ -65,8 +65,8 @@ export default function ContactPage() {
           <p className="text-sm text-muted">A wrong date, team, surface, mechanism or recovery stage. Please include a source link (team release, beat reporter, injury report).</p>
         </li>
         <li className="rounded-xl border border-border bg-surface p-4">
-          <p className="font-semibold">Injury tips</p>
-          <p className="text-sm text-muted">An ACL or Achilles injury we haven&apos;t tracked yet, or a recovery update.</p>
+          <p className="font-semibold">Tear tips</p>
+          <p className="text-sm text-muted">An ACL or Achilles tear we haven&apos;t tracked yet, or a recovery update.</p>
         </li>
         <li className="rounded-xl border border-border bg-surface p-4">
           <p className="font-semibold">Data &amp; media inquiries</p>

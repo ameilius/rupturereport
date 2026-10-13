@@ -102,12 +102,15 @@ export function InjuryForm({
   teams,
   stadiums,
   allTypes,
+  defaultSeason,
 }: {
   injury?: Row | null;
   playerId: number;
   teams: Row[];
   stadiums: Row[];
   allTypes?: boolean;
+  /** New injuries default to the current season (settings.current_season). */
+  defaultSeason?: number;
 }) {
   const v = (k: string) => (injury?.[k] == null ? undefined : String(injury[k]));
   const current = v("injury_type");
@@ -127,7 +130,7 @@ export function InjuryForm({
           <Input name="injury_date" type="date" required defaultValue={injury ? fmtDate(injury.injury_date) : undefined} />
         </Field>
         <Field label="Season" name="season">
-          <Input name="season" type="number" min={2000} max={2100} defaultValue={v("season") ?? "2026"} />
+          <Input name="season" type="number" min={2000} max={2100} defaultValue={v("season") ?? (defaultSeason != null ? String(defaultSeason) : undefined)} required />
         </Field>
         <Field label="Week" name="week">
           <Input name="week" type="number" min={0} max={23} defaultValue={v("week")} />

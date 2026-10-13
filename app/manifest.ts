@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Rupture Report — NFL ACL & Achilles Injury Tracker",
+    name: "Rupture Report — NFL ACL & Achilles Tear Tracker",
     short_name: "Rupture Report",
-    description: "Tracking NFL ACL and Achilles injuries in 2026.",
+    description: "Tracking every NFL ACL and Achilles tear, season by season.",
     start_url: "/",
     display: "standalone",
     theme_color: "#0B0F14",

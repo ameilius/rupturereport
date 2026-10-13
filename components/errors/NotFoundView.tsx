@@ -20,7 +20,7 @@ export function NotFoundView() {
           href="/"
           className="rounded-lg bg-teal px-5 py-2.5 font-semibold text-bg transition hover:brightness-110"
         >
-          Injury tracker
+          Tear tracker
         </Link>
         <Link
           href="/players"
@@ -48,7 +48,7 @@ async function RecentInjuries() {
   return (
     <section className="mx-auto mt-14 max-w-md text-left" aria-labelledby="recent-heading">
       <h2 id="recent-heading" className="text-xs font-semibold uppercase tracking-wider text-muted">
-        Most recent injuries
+        Most recent tears
       </h2>
       <ul className="mt-3 divide-y divide-border rounded-xl border border-border bg-surface">
         {rows.map((r) => (

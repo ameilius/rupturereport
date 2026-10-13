@@ -97,12 +97,12 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
   const faq: { q: string; a: string }[] = [];
 
   faq.push({
-    q: `How many ACL tears have there been in the ${league} in ${season}?`,
-    a: `Rupture Report has tracked ${plural(acl.length, "torn ACL")} in the ${season} ${league} season (offseason, preseason and regular season).`,
+    q: `How many ACL tears have there been in the ${season} ${league} season?`,
+    a: `Rupture Report has tracked ${plural(acl.length, "ACL tear")} in the ${season} ${league} season (offseason, preseason and regular season).`,
   });
   faq.push({
-    q: `How many Achilles tears have there been in the ${league} in ${season}?`,
-    a: `Rupture Report has tracked ${plural(ach.length, "torn Achilles tendon")} in the ${season} ${league} season.`,
+    q: `How many Achilles tears have there been in the ${season} ${league} season?`,
+    a: `Rupture Report has tracked ${plural(ach.length, "Achilles tear")} in the ${season} ${league} season (offseason, preseason and regular season).`,
   });
 
   const byTeam = new Map<string, number>();
@@ -111,11 +111,11 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
   if (max > 0) {
     const top = [...byTeam].filter(([, n]) => n === max).map(([t]) => t).sort();
     faq.push({
-      q: `Which ${league} team has the most ACL and Achilles injuries in ${season}?`,
+      q: `Which ${league} team has the most ACL and Achilles tears in the ${season} season?`,
       a:
         top.length === 1
-          ? `The ${top[0]} have the most tracked ACL and Achilles tears in ${season}, with ${max}.`
-          : `The ${top.join(", ")} are tied for the most tracked ACL and Achilles tears in ${season}, with ${max} each.`,
+          ? `The ${top[0]} have the most tracked ACL and Achilles tears in the ${season} season, with ${max}.`
+          : `The ${top.join(", ")} are tied for the most tracked ACL and Achilles tears in the ${season} season, with ${max} each.`,
     });
   }
 
@@ -125,7 +125,7 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
     const nat = withSurface.filter((r) => r.surface === "natural").length;
     const hyb = withSurface.filter((r) => r.surface === "hybrid").length;
     faq.push({
-      q: `How many ${season} ${league} ACL and Achilles tears happened on artificial turf vs grass?`,
+      q: `How many ${season} ${league} season ACL and Achilles tears happened on artificial turf vs grass?`,
       a: `Of ${plural(withSurface.length, "tracked tear")} that happened in games with a known surface, ${art} occurred on artificial turf, ${nat} on natural grass and ${hyb} on hybrid grass. The other ${rows.length - withSurface.length} did not occur in a game with a recorded venue (e.g. practices and workouts).`,
     });
   }
@@ -134,15 +134,15 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
   if (known.length) {
     const nc = known.filter((r) => r.mechanism === "non_contact").length;
     faq.push({
-      q: `How many ${season} ${league} ACL and Achilles tears were non-contact?`,
-      a: `${nc} of the ${plural(known.length, "tear")} with a reported mechanism were non-contact injuries.`,
+      q: `How many ${season} ${league} season ACL and Achilles tears were non-contact?`,
+      a: `${nc} of the ${plural(known.length, "tear")} with a reported mechanism were non-contact.`,
     });
   }
 
   const latest = rows[0];
   if (latest) {
     faq.push({
-      q: `What is the most recent ${league} ACL or Achilles tear?`,
+      q: `What is the most recent ACL or Achilles tear of the ${season} ${league} season?`,
       a: injurySentence(trackerRowFacts(latest)),
     });
   }

@@ -40,7 +40,7 @@ export default async function Image({
       logoPath = data.player.team?.logoPath ?? null;
       const i = data.injuries[0];
       if (i) {
-        injury = `${formatInjuryType(i.injuryType)} injury`;
+        injury = `${formatInjuryType(i.injuryType)} tear · ${i.season} season`;
         const latest = i.updates.at(-1);
         stage = latest ? STAGE_LABELS[latest.stage] : "Awaiting update";
       }

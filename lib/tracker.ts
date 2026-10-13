@@ -4,6 +4,7 @@ import { gated } from "@/lib/images";
 
 export interface TrackerRow {
   id: number;
+  season: number;
   slug: string;
   name: string;
   position: string | null;
@@ -35,9 +36,19 @@ function iso(v: unknown): string | null {
   return String(v).slice(0, 10);
 }
 
-export async function getTrackerRows(): Promise<TrackerRow[]> {
+/**
+ * Tracker rows, newest first. Progress updates always stay attached to their injury,
+ * whatever their date, so a row's stage is its latest update ever.
+ * - season: only tears from that season
+ * - before: only tears from seasons earlier than this one
+ */
+export async function getTrackerRows(opts: { season?: number; before?: number } = {}): Promise<TrackerRow[]> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (opts.season != null) { where.push("i.season = ?"); params.push(opts.season); }
+  if (opts.before != null) { where.push("i.season < ?"); params.push(opts.before); }
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT i.id, p.slug, p.first_name, p.last_name, p.position,
+    `SELECT i.id, i.season, p.slug, p.first_name, p.last_name, p.position,
             t.abbreviation team, t.name team_name, t.logo_path, p.headshot_path,
             i.injury_type, i.body_side, i.injury_date, i.week, i.phase, i.mechanism, i.home_away,
             o.abbreviation opponent, o.name opponent_name, s.name stadium, s.surface_type, s.surface_brand,
@@ -52,10 +63,13 @@ export async function getTrackerRows(): Promise<TrackerRow[]> {
        LEFT JOIN teams t ON t.id = p.team_id
        LEFT JOIN teams o ON o.id = i.opponent_id
        LEFT JOIN stadiums s ON s.id = i.stadium_id
+      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
       ORDER BY i.injury_date DESC, i.id DESC`,
+    params,
   );
   return rows.map((r) => ({
     id: Number(r.id),
+    season: Number(r.season),
     slug: r.slug,
     name: `${r.first_name} ${r.last_name}`,
     position: r.position ?? null,
@@ -127,4 +141,18 @@ export function weeklySeries(rows: TrackerRow[], now = new Date()): WeeklySeries
     if (r.injuryType === "Achilles") s.achilles[i]++;
   }
   return s;
+}
+
+/**
+ * Long-term recovery for season N: tears from earlier seasons not yet "returned"
+ * (shown separately, never counted in season N totals), plus how many of the
+ * previous season's tears have returned.
+ */
+export async function getCarryover(season: number) {
+  const earlier = await getTrackerRows({ before: season });
+  const stillRecovering = earlier.filter((r) => r.stage !== "returned");
+  const prev = earlier.filter((r) => r.season === season - 1);
+  const prevReturnedPlayers = new Set(prev.filter((r) => r.stage === "returned").map((r) => r.slug)).size;
+  const prevPlayers = new Set(prev.map((r) => r.slug)).size;
+  return { stillRecovering, prevSeason: season - 1, prevPlayers, prevReturnedPlayers };
 }

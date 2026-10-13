@@ -7,12 +7,12 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 const siteUrl = "https://rupturereport.com";
 const siteName = "Rupture Report";
 const siteDescription =
-  "Tracking NFL ACL and Achilles injuries: recovery timelines, turf type, stadium, and return-to-play data for every player.";
+  "Tracking every NFL ACL and Achilles tear, season by season: recovery timelines, playing surface, stadium and return-to-play data for every player.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${siteName} | NFL ACL & Achilles Injury Tracker`,
+    default: `${siteName} | NFL ACL & Achilles Tear Tracker`,
     template: `%s | ${siteName}`,
   },
   description: siteDescription,
@@ -21,13 +21,13 @@ export const metadata: Metadata = {
     type: "website",
     url: siteUrl,
     siteName,
-    title: `${siteName} | NFL ACL & Achilles Injury Tracker`,
+    title: `${siteName} | NFL ACL & Achilles Tear Tracker`,
     description: siteDescription,
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteName} | NFL ACL & Achilles Injury Tracker`,
+    title: `${siteName} | NFL ACL & Achilles Tear Tracker`,
     description: siteDescription,
   },
   robots: {

@@ -13,9 +13,9 @@ import {
   type PlayerListItem,
 } from "@/lib/players";
 
-const title = "Tracked NFL Players: ACL & Achilles Injuries 2026";
+const title = "Tracked NFL Players: ACL & Achilles Tears, All Seasons";
 const description =
-  "Every NFL player with an ACL or Achilles injury in the 2026 season, with recovery stage, injury date, and team.";
+  "Every NFL player with a tracked ACL or Achilles tear, across all seasons, with recovery stage, tear date and team.";
 
 export const metadata: Metadata = {
   title,
@@ -67,7 +67,7 @@ async function PlayerList() {
       <p className="mt-10 rounded-xl border border-border bg-surface p-6 text-muted">
         {failed
           ? "Player data is temporarily unavailable. Please check back shortly."
-          : "No players are being tracked yet. Check back soon as the 2026 season unfolds."}
+          : "No players are being tracked yet. Check back soon as the season unfolds."}
       </p>
     );
   }
