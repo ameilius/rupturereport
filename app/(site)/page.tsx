@@ -8,7 +8,8 @@ import InjuryTracker from "@/components/InjuryTracker";
 import { datasetJsonLd } from "@/lib/structured-data";
 import { formatDate } from "@/lib/format";
 import { trackerFaq } from "@/lib/summaries";
-import { computeStats, getTrackerRows, type TrackerRow } from "@/lib/tracker";
+import { computeStats, getTrackerRows, weeklySeries, type TrackerRow } from "@/lib/tracker";
+import StatStrip, { type StatItem } from "@/components/StatStrip";
 
 const siteUrl = "https://rupturereport.com";
 const title = "NFL ACL & Achilles Injuries 2026 | Injury Tracker";
@@ -145,18 +146,24 @@ async function TrackerData() {
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   };
-  const stats: { label: string; value: string; sub?: string; tone?: string }[] = [
-    { label: "Tracked tears", value: String(s.total) },
-    { label: "ACL", value: String(s.acl), tone: "text-teal" },
-    { label: "Achilles", value: String(s.achilles), tone: "text-amber" },
+  const wk = weeklySeries(rows);
+  const span = wk ? `per week since ${formatDate(wk.start)}` : "";
+  const stats: StatItem[] = [
+    { label: "Tracked tears", value: String(s.total), num: s.total, spark: wk ? { data: wk.total, color: "#E6EDF3", title: `All tears ${span}` } : undefined },
+    { label: "ACL", value: String(s.acl), num: s.acl, tone: "text-teal", spark: wk ? { data: wk.acl, color: "#14B8A6", title: `ACL tears ${span}` } : undefined },
+    { label: "Achilles", value: String(s.achilles), num: s.achilles, tone: "text-amber", spark: wk ? { data: wk.achilles, color: "#F59E0B", title: `Achilles tears ${span}` } : undefined },
     {
       label: "Artificial turf",
       value: s.artificialPct == null ? "—" : `${s.artificialPct}%`,
+      num: s.artificialPct ?? undefined,
+      suffix: "%",
       sub: s.games ? `of ${s.games} game injur${s.games === 1 ? "y" : "ies"} · ${s.naturalPct}% grass/hybrid` : "no game injuries yet",
     },
     {
       label: "Non-contact",
       value: s.nonContactPct == null ? "—" : `${s.nonContactPct}%`,
+      num: s.nonContactPct ?? undefined,
+      suffix: "%",
       sub: s.mechanismKnown ? `where known (n=${s.mechanismKnown})` : "mechanism unknown",
     },
   ];
@@ -183,15 +190,7 @@ async function TrackerData() {
           </>
         )}
       </p>
-      <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {stats.map((x) => (
-          <div key={x.label} className="rounded-xl border border-border bg-surface p-3 sm:p-4">
-            <dt className="text-xs uppercase tracking-wider text-muted">{x.label}</dt>
-            <dd className={`mt-1 text-2xl font-bold ${x.tone ?? ""}`}>{x.value}</dd>
-            {x.sub && <dd className="mt-0.5 text-xs text-muted">{x.sub}</dd>}
-          </div>
-        ))}
-      </dl>
+      <StatStrip stats={stats} />
       <InjuryTracker rows={rows} />
       {faq.length > 0 && (
         <section aria-labelledby="faq-heading" className="mt-14">

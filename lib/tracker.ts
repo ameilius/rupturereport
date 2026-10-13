@@ -96,3 +96,33 @@ export function computeStats(rows: TrackerRow[]) {
     nonContactPct: known.length ? Math.round((nonContact / known.length) * 100) : null,
   };
 }
+
+export interface WeeklySeries {
+  start: string; // ISO date (Monday) of first bucket
+  total: number[];
+  acl: number[];
+  achilles: number[];
+}
+
+/** Tears per calendar week (Mon–Sun, UTC) from the first tracked injury's week through the current week. */
+export function weeklySeries(rows: TrackerRow[], now = new Date()): WeeklySeries | null {
+  const dates = rows.filter((r) => r.injuryDate).map((r) => new Date(r.injuryDate!.slice(0, 10) + "T00:00:00Z"));
+  if (!dates.length) return null;
+  const monday = (d: Date) => {
+    const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7));
+    return x;
+  };
+  const start = monday(new Date(Math.min(...dates.map((d) => d.getTime()))));
+  const end = monday(new Date(Math.max(now.getTime(), ...dates.map((d) => d.getTime()))));
+  const n = Math.round((end.getTime() - start.getTime()) / 604800000) + 1;
+  const s: WeeklySeries = { start: start.toISOString().slice(0, 10), total: Array(n).fill(0), acl: Array(n).fill(0), achilles: Array(n).fill(0) };
+  for (const r of rows) {
+    if (!r.injuryDate) continue;
+    const i = Math.floor((new Date(r.injuryDate.slice(0, 10) + "T00:00:00Z").getTime() - start.getTime()) / 604800000);
+    s.total[i]++;
+    if (r.injuryType === "ACL") s.acl[i]++;
+    if (r.injuryType === "Achilles") s.achilles[i]++;
+  }
+  return s;
+}
