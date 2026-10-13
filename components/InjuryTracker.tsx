@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 import type { TrackerRow } from "@/lib/tracker";
 import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
+import { MiniStageBar } from "@/components/RecoveryProgress";
 
 const STAGE: Record<string, string> = {
   diagnosis: "Diagnosis", surgery: "Surgery", immobilization: "Immobilization",
@@ -165,7 +166,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
                     <td className="px-4 py-3 text-muted">{r.position ?? "—"}</td>
                     <td className="px-4 py-3"><Badge type={r.injuryType} /></td>
                     <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate)}</time></td>
-                    <td className="px-4 py-3">{r.stage ? STAGE[r.stage] ?? r.stage : "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap"><MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted">{context(r)}</td>
                     <td className="px-4 py-3" title={r.stadium ? `${r.stadium}${r.surfaceBrand ? ` · ${r.surfaceBrand}` : ""}` : undefined}>
                       {surfaceLabel(r)}
@@ -198,7 +199,7 @@ export default function InjuryTracker({ rows }: { rows: TrackerRow[] }) {
                     <div><dt className="text-muted">Where</dt><dd>{context(r)}</dd></div>
                     <div><dt className="text-muted">Surface</dt><dd>{surfaceLabel(r)}</dd></div>
                   </dl>
-                  <p className="mt-2 text-xs text-muted">Stage: <span className="text-text">{r.stage ? STAGE[r.stage] ?? r.stage : "—"}</span></p>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-muted">Stage: <MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></div>
                 </Link>
               </li>
             ))}

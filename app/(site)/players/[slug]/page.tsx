@@ -8,13 +8,14 @@ import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
 import { formatDate, humanize } from "@/lib/format";
 import {
   STAGE_LABELS,
-  STAGE_ORDER,
   formatInjuryType,
   getPlayerBySlug,
   type Injury,
   type PlayerDetail,
 } from "@/lib/players";
 import { contrast, localImage, teamColors } from "@/lib/images";
+import { RecoveryStepper } from "@/components/RecoveryProgress";
+import { trackDates } from "@/lib/recovery";
 import { organizationRef } from "@/lib/structured-data";
 import { conditionAnatomy, conditionName, injurySentence, playerInjuryFacts } from "@/lib/summaries";
 
@@ -267,6 +268,23 @@ async function PlayerContent({ params }: Props) {
         </div>
         </div>
       </header>
+      {injuries[0] && (() => {
+        const latest = injuries[0].updates.at(-1);
+        return (
+          <section aria-labelledby="recovery-progress" className="mt-6 rounded-2xl border border-border bg-surface p-5 sm:p-6">
+            <h2 id="recovery-progress" className="text-xs font-semibold uppercase tracking-wider text-muted">
+              Recovery progress{injuries.length > 1 ? ` · latest ${formatInjuryType(injuries[0].injuryType)} injury` : ""}
+            </h2>
+            <div className="mt-4">
+              <RecoveryStepper
+                stage={latest?.stage ?? null}
+                stageLabel={latest ? STAGE_LABELS[latest.stage] : null}
+                dates={trackDates(injuries[0].updates)}
+              />
+            </div>
+          </section>
+        );
+      })()}
       {summaries.length > 0 && (
         <div className="mt-6 space-y-2 text-base leading-relaxed text-text" data-summary>
           {summaries.map((t, idx) => (
@@ -281,8 +299,8 @@ async function PlayerContent({ params }: Props) {
         </p>
       ) : (
         <div className="mt-10 space-y-10">
-          {injuries.map((injury) => (
-            <InjuryCard key={injury.id} injury={injury} />
+          {injuries.map((injury, idx) => (
+            <InjuryCard key={injury.id} injury={injury} primary={idx === 0} />
           ))}
         </div>
       )}
@@ -303,7 +321,7 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function InjuryCard({ injury }: { injury: Injury }) {
+function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boolean }) {
   const type = formatInjuryType(injury.injuryType);
   const stadium = injury.stadium;
   const surface = stadium
@@ -390,24 +408,14 @@ function InjuryCard({ injury }: { injury: Injury }) {
         <p className="mt-6 text-muted">{injury.severityNotes}</p>
       )}
 
-      <RecoveryTimeline injury={injury} />
+      <RecoveryTimeline injury={injury} primary={primary} />
     </article>
   );
 }
 
-function RecoveryTimeline({ injury }: { injury: Injury }) {
+function RecoveryTimeline({ injury, primary = false }: { injury: Injury; primary?: boolean }) {
   const updates = injury.updates;
   const latest = updates.at(-1);
-  const reached = new Set(updates.map((u) => u.stage));
-  const latestIdx = latest
-    ? STAGE_ORDER.indexOf(latest.stage as (typeof STAGE_ORDER)[number])
-    : -1;
-  const maxIdx = Math.max(
-    latestIdx,
-    ...STAGE_ORDER.map((s, i) => (reached.has(s) ? i : -1)),
-  );
-  const pct =
-    maxIdx < 0 ? 0 : Math.round(((maxIdx + 1) / STAGE_ORDER.length) * 100);
   const reinjured = latest?.stage === "reinjured";
 
   return (
@@ -422,32 +430,15 @@ function RecoveryTimeline({ injury }: { injury: Injury }) {
         </strong>
       </p>
 
-      <div
-        className="mt-4 h-3 w-full overflow-hidden rounded-full bg-border"
-        role="progressbar"
-        aria-label="Recovery progress"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={pct}
-        aria-valuetext={latest ? STAGE_LABELS[latest.stage] : "Not started"}
-      >
-        <div
-          className={`h-full rounded-full ${reinjured ? "bg-amber" : "bg-teal"}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <ol className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-4 lg:grid-cols-6">
-        {STAGE_ORDER.map((s, i) => (
-          <li
-            key={s}
-            className={i <= maxIdx ? "text-text" : "text-muted/60"}
-            aria-current={latest?.stage === s ? "step" : undefined}
-          >
-            <span aria-hidden="true">{i <= maxIdx ? "● " : "○ "}</span>
-            {STAGE_LABELS[s]}
-          </li>
-        ))}
-      </ol>
+      {!primary && (
+        <div className="mt-4">
+          <RecoveryStepper
+            stage={latest?.stage ?? null}
+            stageLabel={latest ? STAGE_LABELS[latest.stage] : null}
+            dates={trackDates(updates)}
+          />
+        </div>
+      )}
 
       {updates.length > 0 ? (
         <ol className="mt-8 space-y-6 border-l border-border pl-6">
