@@ -112,6 +112,11 @@ export interface PlayerListItem {
   injuryType: InjuryType;
   injuryDate: string | null;
   latestStage: Stage | null;
+  bodySide: string | null;
+  season: number | null;
+  dob: string | null;
+  heightIn: number | null;
+  weightLb: number | null;
 }
 
 function toIsoDate(v: unknown): string | null {
@@ -268,6 +273,7 @@ export async function getAllPlayerSlugs(): Promise<
 export async function getInjuredPlayersList(): Promise<PlayerListItem[]> {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT p.slug, p.first_name, p.last_name, p.position, p.headshot_path,
+            p.dob, p.height_in, p.weight_lb, i.body_side, i.season,
             t.name AS team_name, t.abbreviation AS team_abbr, t.logo_path AS team_logo,
             i.injury_type, i.injury_date,
             (SELECT pu.stage FROM progress_updates pu
@@ -291,5 +297,10 @@ export async function getInjuredPlayersList(): Promise<PlayerListItem[]> {
     injuryType: r.injury_type,
     injuryDate: toIsoDate(r.injury_date),
     latestStage: r.latest_stage ?? null,
+    bodySide: r.body_side ?? null,
+    season: r.season ?? null,
+    dob: toIsoDate(r.dob),
+    heightIn: r.height_in ?? null,
+    weightLb: r.weight_lb ?? null,
   }));
 }
