@@ -53,6 +53,7 @@ export function SiteFooter() {
               <li><Link href="/" className="text-text hover:text-teal">Tracker</Link></li>
               <li><Link href="/players" className="text-text hover:text-teal">Players</Link></li>
               <li><Link href="/contact" className="text-text hover:text-teal">Contact</Link></li>
+              <li><Link href="/terms" className="text-text hover:text-teal">Terms &amp; data license</Link></li>
             </ul>
           </nav>
           <div>

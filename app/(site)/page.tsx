@@ -5,6 +5,7 @@ import ShareButton from "@/components/ShareButton";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import InjuryTracker from "@/components/InjuryTracker";
+import { datasetJsonLd } from "@/lib/structured-data";
 import { computeStats, getTrackerRows, type TrackerRow } from "@/lib/tracker";
 
 const siteUrl = "https://rupturereport.com";
@@ -59,16 +60,14 @@ const jsonLd = {
       description,
       inLanguage: "en-US",
     },
-    {
-      "@type": "Dataset",
-      "@id": `${siteUrl}/#dataset`,
+    datasetJsonLd({
+      id: `${siteUrl}/#dataset`,
       name: "NFL ACL & Achilles Injuries 2026",
       description:
         "Tracked torn ACL and Achilles injuries across the 2026 NFL offseason, preseason and regular season, including injury date, team, position, game context, playing surface, mechanism and recovery stage.",
       url: siteUrl,
-      creator: { "@id": `${siteUrl}/#organization` },
-      temporalCoverage: "2026",
-      spatialCoverage: "United States",
+      league: "NFL",
+      season: "2026",
       keywords: [
         "NFL ACL injuries 2026",
         "NFL Achilles injuries 2026",
@@ -78,9 +77,7 @@ const jsonLd = {
         "natural grass",
         "injury recovery",
       ],
-      isAccessibleForFree: true,
-      includedInDataCatalog: { "@id": `${siteUrl}/#website` },
-    },
+    }),
   ],
 };
 
