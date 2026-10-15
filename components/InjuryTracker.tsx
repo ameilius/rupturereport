@@ -46,6 +46,7 @@ function context(r: TrackerRow) {
 }
 
 function surfaceLabel(r: TrackerRow) {
+  if (!r.surface && r.practiceSurface) return `${r.practiceSurface.charAt(0).toUpperCase() + r.practiceSurface.slice(1)} (practice)`;
   if (!r.surface) return "—";
   return r.surface.charAt(0).toUpperCase() + r.surface.slice(1);
 }
@@ -190,7 +191,7 @@ export default function InjuryTracker({
                     <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate, showYear)}</time></td>
                     <td className="px-4 py-3 whitespace-nowrap"><MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted">{context(r)}</td>
-                    <td className="px-4 py-3" title={r.stadium ? `${r.stadium}${r.surfaceBrand ? ` · ${r.surfaceBrand}` : ""}` : undefined}>
+                    <td className="px-4 py-3" title={r.stadium ? `${r.stadium}${r.surfaceBrand ? ` · ${r.surfaceBrand}` : ""}` : r.practiceVenue ?? undefined}>
                       {surfaceLabel(r)}
                     </td>
                   </tr>

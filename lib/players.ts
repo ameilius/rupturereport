@@ -92,6 +92,8 @@ export interface Injury {
     surfaceBrand: string | null;
   } | null;
   opponent: { name: string; abbreviation: string } | null;
+  practiceVenue: string | null;
+  practiceSurface: string | null;
   updates: ProgressUpdate[];
 }
 
@@ -228,6 +230,8 @@ export async function getPlayerBySlug(
     opponent: i.opponent_name
       ? { name: i.opponent_name, abbreviation: i.opponent_abbr }
       : null,
+    practiceVenue: i.practice_venue ?? null,
+    practiceSurface: i.practice_surface ?? null,
     updates: updateRows
       .filter((u) => u.injury_id === i.id)
       .map((u) => ({

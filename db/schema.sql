@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS injuries (
   phase           ENUM('preseason','regular','playoffs') NULL,
   severity_notes  TEXT NULL,
   source          VARCHAR(500) NULL,
+  practice_venue  VARCHAR(160) NULL,
+  practice_surface ENUM('natural','hybrid','artificial') NULL,
   created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (player_id) REFERENCES players(id),

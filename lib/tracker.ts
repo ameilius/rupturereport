@@ -25,6 +25,9 @@ export interface TrackerRow {
   stadium: string | null;
   surface: string | null;
   surfaceBrand: string | null;
+  /** Non-game tears: practice field surface/venue when a credible report states it. Never used in game-surface stats. */
+  practiceSurface: string | null;
+  practiceVenue: string | null;
   stage: string | null;
   stageDate: string | null;
   lastModified: string | null;
@@ -51,7 +54,7 @@ export async function getTrackerRows(opts: { season?: number; before?: number } 
     `SELECT i.id, i.season, p.slug, p.first_name, p.last_name, p.position,
             t.abbreviation team, t.name team_name, t.logo_path, p.headshot_path,
             i.injury_type, i.body_side, i.injury_date, i.week, i.phase, i.mechanism, i.home_away,
-            o.abbreviation opponent, o.name opponent_name, s.name stadium, s.surface_type, s.surface_brand,
+            o.abbreviation opponent, o.name opponent_name, s.name stadium, s.surface_type, s.surface_brand, i.practice_surface, i.practice_venue,
             (SELECT u.stage FROM progress_updates u WHERE u.injury_id = i.id
               ORDER BY u.update_date DESC, u.id DESC LIMIT 1) stage,
             (SELECT u.update_date FROM progress_updates u WHERE u.injury_id = i.id
@@ -90,6 +93,8 @@ export async function getTrackerRows(opts: { season?: number; before?: number } 
     stadium: r.stadium ?? null,
     surface: r.surface_type ?? null,
     surfaceBrand: r.surface_brand ?? null,
+    practiceSurface: r.practice_surface ?? null,
+    practiceVenue: r.practice_venue ?? null,
     stage: r.stage ?? null,
     stageDate: iso(r.stage_date),
     lastModified: r.last_modified ? new Date(r.last_modified).toISOString() : null,

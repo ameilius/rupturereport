@@ -349,7 +349,9 @@ function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boo
     ? [humanize(stadium.surfaceType), stadium.surfaceBrand]
         .filter(Boolean)
         .join(" · ")
-    : null;
+    : injury.practiceSurface
+      ? `${humanize(injury.practiceSurface)} (practice field)`
+      : null;
   const location = stadium
     ? [stadium.name, [stadium.city, stadium.state].filter(Boolean).join(", ")]
         .filter(Boolean)
@@ -408,7 +410,11 @@ function InjuryCard({ injury, primary = false }: { injury: Injury; primary?: boo
               : null
           }
         />
-        <Fact label="Stadium" value={location} />
+        {location || !injury.practiceVenue ? (
+          <Fact label="Stadium" value={location} />
+        ) : (
+          <Fact label="Practice site" value={injury.practiceVenue} />
+        )}
         <Fact label="Surface" value={surface} />
         <Fact label="Mechanism" value={humanize(injury.mechanism)} />
         <Fact label="Side" value={humanize(injury.bodySide)} />
