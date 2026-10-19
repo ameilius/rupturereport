@@ -1,3 +1,4 @@
+import Analytics from "@/components/Analytics";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -6,6 +7,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <SiteHeader />
       {children}
       <SiteFooter />
+      <Analytics />
     </div>
   );
 }
