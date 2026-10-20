@@ -142,7 +142,11 @@ export default async function Image({
                 marginTop: 16,
               }}
             >
-              {logoSrc ? <img src={logoSrc} width={48} height={48} alt="" style={{ marginRight: 16 }} /> : null}
+              {logoSrc ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, borderRadius: 28, background: "rgba(241,245,249,0.92)", marginRight: 16 }}>
+                  <img src={logoSrc} width={40} height={40} alt="" />
+                </div>
+              ) : null}
               {team}
             </div>
           ) : null}

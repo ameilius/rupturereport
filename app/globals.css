@@ -136,3 +136,4 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .player-card:hover { transform: none; }
 }
+

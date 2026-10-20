@@ -13,15 +13,31 @@ export function TeamBadge({ abbr, size = 24 }: { abbr: string | null; size?: num
   );
 }
 
+/**
+ * Team logo on a light circular backing so dark marks (JAX, NO, LV, BAL, NYG, CHI, NE…) stay legible
+ * on the dark UI and team-color accents. Outer box is exactly `size`; the mark is inset ~14%.
+ * The custom badge fallback sits on the same backing for consistency.
+ */
 export function TeamLogo({ abbr, name, logoPath, size = 24 }: {
   abbr: string | null; name?: string | null; logoPath?: string | null; size?: number;
 }) {
   const src = localImage(logoPath);
   const label = `${name ?? abbr ?? "Team"} logo`;
+  const inner = Math.max(12, Math.round(size * 0.72));
+  const chip = "inline-flex shrink-0 items-center justify-center rounded-full";
+  const backing = { width: size, height: size, background: "rgb(241 245 249 / 0.92)", boxShadow: "0 0 0 1px rgb(255 255 255 / 0.18), 0 1px 3px rgb(0 0 0 / 0.45)" };
   if (src) {
-    return <Image src={src} alt={label} width={size} height={size} sizes={`${size}px`} className="shrink-0 object-contain" style={{ width: size, height: size }} />;
+    return (
+      <span className={chip} style={backing}>
+        <Image src={src} alt={label} width={inner} height={inner} sizes={`${inner}px`} className="object-contain" style={{ width: inner, height: inner }} />
+      </span>
+    );
   }
-  return <span role="img" aria-label={label} className="inline-flex"><TeamBadge abbr={abbr} size={size} /></span>;
+  return (
+    <span role="img" aria-label={label} className={chip} style={backing}>
+      <TeamBadge abbr={abbr} size={inner} />
+    </span>
+  );
 }
 
 export function PlayerAvatar({ name, team, headshotPath, size = 32, priority = false }: {
