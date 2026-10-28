@@ -1,6 +1,7 @@
 import type { RowDataPacket } from "mysql2/promise";
 import { pool } from "@/lib/db";
 import { gated } from "@/lib/images";
+import type { League } from "@/lib/leagues";
 
 export type InjuryType = "ACL" | "Achilles" | "MCL" | "other";
 
@@ -45,6 +46,9 @@ export interface Team {
 
 export interface Player {
   id: number;
+  league: League;
+  /** Short note shown beside the team (e.g. waived). */
+  statusNote: string | null;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -119,6 +123,7 @@ export interface PlayerListItem {
   dob: string | null;
   heightIn: number | null;
   weightLb: number | null;
+  statusNote: string | null;
 }
 
 function toIsoDate(v: unknown): string | null {
@@ -139,11 +144,13 @@ export function formatInjuryType(t: InjuryType): string {
   return t === "other" ? "Major" : t;
 }
 
+/** With `league`, a slug that belongs to the other league resolves to null (so /players/x and /nba/players/x never overlap). */
 export async function getPlayerBySlug(
   slug: string,
+  league?: League,
 ): Promise<PlayerDetail | null> {
   const [playerRows] = await pool.query<RowDataPacket[]>(
-    `SELECT p.id, p.first_name, p.last_name, p.slug, p.position, p.dob,
+    `SELECT p.id, p.league, p.status_note, p.first_name, p.last_name, p.slug, p.position, p.dob,
             p.height_in, p.weight_lb, p.updated_at, p.created_at, p.headshot_path,
             t.id AS team_id, t.abbreviation AS team_abbr, t.name AS team_name,
             t.slug AS team_slug, t.logo_path AS team_logo
@@ -154,10 +161,12 @@ export async function getPlayerBySlug(
     [slug],
   );
   const r = playerRows[0];
-  if (!r) return null;
+  if (!r || (league && r.league !== league)) return null;
 
   const player: Player = {
     id: r.id,
+    league: r.league === "NBA" ? "NBA" : "NFL",
+    statusNote: r.status_note ?? null,
     firstName: r.first_name,
     lastName: r.last_name,
     fullName: `${r.first_name} ${r.last_name}`,
@@ -256,28 +265,29 @@ export async function getPlayerBySlug(
 }
 
 export async function getAllPlayerSlugs(): Promise<
-  { slug: string; lastModified: string | null }[]
+  { slug: string; league: League; lastModified: string | null }[]
 > {
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT p.slug, GREATEST(p.updated_at,
+    `SELECT p.slug, p.league, GREATEST(p.updated_at,
               COALESCE(MAX(i.updated_at), p.updated_at),
               COALESCE(MAX(u.created_at), p.updated_at)) AS last_modified
        FROM players p
        JOIN injuries i ON i.player_id = p.id
        LEFT JOIN progress_updates u ON u.injury_id = i.id
-      GROUP BY p.id, p.slug, p.updated_at
+      GROUP BY p.id, p.slug, p.league, p.updated_at
       ORDER BY p.slug`,
   );
   return rows.map((r) => ({
     slug: r.slug,
+    league: r.league === "NBA" ? "NBA" : "NFL",
     lastModified: toIsoDate(r.last_modified),
   }));
 }
 
-export async function getInjuredPlayersList(): Promise<PlayerListItem[]> {
+export async function getInjuredPlayersList(league: League = "NFL"): Promise<PlayerListItem[]> {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT p.slug, p.first_name, p.last_name, p.position, p.headshot_path,
-            p.dob, p.height_in, p.weight_lb, i.body_side, i.season,
+            p.dob, p.height_in, p.weight_lb, p.status_note, i.body_side, i.season,
             t.name AS team_name, t.abbreviation AS team_abbr, t.logo_path AS team_logo,
             i.injury_type, i.injury_date,
             (SELECT pu.stage FROM progress_updates pu
@@ -288,7 +298,9 @@ export async function getInjuredPlayersList(): Promise<PlayerListItem[]> {
               SELECT i2.id FROM injuries i2 WHERE i2.player_id = p.id
                ORDER BY i2.injury_date DESC, i2.id DESC LIMIT 1)
        LEFT JOIN teams t ON t.id = p.team_id
+      WHERE p.league = ?
       ORDER BY i.injury_date DESC, p.last_name ASC`,
+    [league],
   );
   return rows.map((r) => ({
     slug: r.slug,
@@ -306,5 +318,6 @@ export async function getInjuredPlayersList(): Promise<PlayerListItem[]> {
     dob: toIsoDate(r.dob),
     heightIn: r.height_in ?? null,
     weightLb: r.weight_lb ?? null,
+    statusNote: r.status_note ?? null,
   }));
 }

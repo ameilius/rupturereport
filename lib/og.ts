@@ -4,3 +4,11 @@ export const defaultOgImage = {
   height: 630,
   alt: "Rupture Report — NFL ACL & Achilles Tear Tracker",
 };
+
+/** NBA hub/list pages share one dynamic card (app/(site)/nba/opengraph-image.tsx → /nba/opengraph-image). */
+export const nbaOgImage = {
+  url: "/nba/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "Rupture Report — NBA ACL & Achilles Tear Tracker",
+};

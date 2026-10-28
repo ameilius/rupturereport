@@ -41,8 +41,26 @@ export const TEAM_COLORS: Record<string, [string, string]> = {
   TEN: ["#0C2340", "#4B92DB"], WAS: ["#5A1414", "#FFB612"],
 };
 
-export function teamColors(abbr: string | null | undefined): [string, string] {
-  return (abbr && TEAM_COLORS[abbr]) || ["#1F2933", "#14B8A6"];
+/**
+ * NBA team colours [primary, secondary] (hex from teamcolorcodes.com NBA table, 2026-10-28).
+ * Separate map because several abbreviations exist in both leagues (ATL, CHI, DAL, DEN, DET, HOU, IND, LAC, MIA, MIN, PHI, WAS).
+ */
+export const NBA_TEAM_COLORS: Record<string, [string, string]> = {
+  ATL: ["#E03A3E", "#C1D32F"], BOS: ["#007A33", "#BA9653"], BKN: ["#000000", "#FFFFFF"],
+  CHA: ["#1D1160", "#00788C"], CHI: ["#CE1141", "#000000"], CLE: ["#860038", "#FDBB30"],
+  DAL: ["#00538C", "#002B5E"], DEN: ["#0E2240", "#FEC524"], DET: ["#C8102E", "#1D42BA"],
+  GSW: ["#1D428A", "#FFC72C"], HOU: ["#CE1141", "#C4CED4"], IND: ["#002D62", "#FDBB30"],
+  LAC: ["#C8102E", "#1D428A"], LAL: ["#552583", "#FDB927"], MEM: ["#5D76A9", "#12173F"],
+  MIA: ["#98002E", "#F9A01B"], MIL: ["#00471B", "#EEE1C6"], MIN: ["#0C2340", "#236192"],
+  NOP: ["#0C2340", "#C8102E"], NYK: ["#006BB6", "#F58426"], OKC: ["#007AC1", "#EF3B24"],
+  ORL: ["#0077C0", "#C4CED4"], PHI: ["#006BB6", "#ED174C"], PHX: ["#1D1160", "#E56020"],
+  POR: ["#E03A3E", "#000000"], SAC: ["#5A2D81", "#63727A"], SAS: ["#C4CED4", "#000000"],
+  TOR: ["#CE1141", "#000000"], UTA: ["#002B5C", "#F9A01B"], WAS: ["#002B5C", "#E31837"],
+};
+
+export function teamColors(abbr: string | null | undefined, league: "NFL" | "NBA" = "NFL"): [string, string] {
+  const map = league === "NBA" ? NBA_TEAM_COLORS : TEAM_COLORS;
+  return (abbr && map[abbr]) || ["#1F2933", "#14B8A6"];
 }
 
 export function initials(name: string): string {

@@ -7,6 +7,7 @@ import { STAGE_LABELS, type Stage } from "@/lib/players";
 import type { TrackerRow } from "@/lib/tracker";
 
 export interface InjuryFacts {
+  league?: "NFL" | "NBA";
   name: string;
   position: string | null;
   teamName: string | null;
@@ -51,7 +52,13 @@ export function injurySentence(f: InjuryFacts): string {
   const d = formatDate(f.injuryDate);
   if (d) parts.push(`on ${d}`);
   if (f.isGame) {
-    if (f.week) parts.push(`in Week ${f.week}`);
+    if (f.league === "NBA") {
+      const g = f.week ? ` Game ${f.week}` : " game";
+      if (f.phase === "summer_league") parts.push(f.week ? `in Summer League${g}` : "in a Summer League game");
+      else if (f.phase === "preseason") parts.push(f.week ? `in preseason${g}` : "in a preseason game");
+      else if (f.phase === "playoffs") parts.push(f.week ? `in playoff${g}` : "in a playoff game");
+      else if (f.week) parts.push(`in${g}`);
+    } else if (f.week) parts.push(`in Week ${f.week}`);
     else if (f.phase === "preseason") parts.push("in a preseason game");
     else if (f.phase === "playoffs") parts.push("in a playoff game");
     if (f.opponent) parts.push(`${f.homeAway === "away" ? "at" : "vs"} the ${f.opponent}`);
@@ -59,7 +66,7 @@ export function injurySentence(f: InjuryFacts): string {
     if (surf) parts.push(`on ${surf}`);
     if (f.stadium) parts.push(`at ${f.stadium}`);
   } else if (f.phase === "preseason") {
-    parts.push("during offseason/preseason practice");
+    parts.push(f.league === "NBA" ? "during preseason practice" : "during offseason/preseason practice");
   }
   let out = parts.join(" ") + ".";
   const st = stageLabel(f.stage);
@@ -70,8 +77,9 @@ export function injurySentence(f: InjuryFacts): string {
   return out;
 }
 
-export function trackerRowFacts(r: TrackerRow): InjuryFacts {
+export function trackerRowFacts(r: TrackerRow, league: "NFL" | "NBA" = "NFL"): InjuryFacts {
   return {
+    league,
     name: r.name,
     position: r.position,
     teamName: r.teamName,
@@ -91,6 +99,8 @@ export function trackerRowFacts(r: TrackerRow): InjuryFacts {
 
 /** Live FAQ (question + plain answer) computed from tracker rows. */
 export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
+  const nba = league === "NBA";
+  const when = nba ? "Summer League, offseason, preseason and regular season" : "offseason, preseason and regular season";
   const acl = rows.filter((r) => r.injuryType === "ACL");
   const ach = rows.filter((r) => r.injuryType === "Achilles");
   const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
@@ -98,11 +108,11 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
 
   faq.push({
     q: `How many ACL tears have there been in the ${season} ${league} season?`,
-    a: `Rupture Report has tracked ${plural(acl.length, "ACL tear")} in the ${season} ${league} season (offseason, preseason and regular season).`,
+    a: `Rupture Report has tracked ${plural(acl.length, "ACL tear")} in the ${season} ${league} season (${when}).`,
   });
   faq.push({
     q: `How many Achilles tears have there been in the ${season} ${league} season?`,
-    a: `Rupture Report has tracked ${plural(ach.length, "Achilles tear")} in the ${season} ${league} season (offseason, preseason and regular season).`,
+    a: `Rupture Report has tracked ${plural(ach.length, "Achilles tear")} in the ${season} ${league} season (${when}).`,
   });
 
   const byTeam = new Map<string, number>();
@@ -130,6 +140,14 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
     });
   }
 
+  if (nba && rows.length) {
+    const g = rows.filter((r) => r.isGame).length;
+    faq.push({
+      q: `How many ${season} ${league} season ACL and Achilles tears happened in games?`,
+      a: `${g} of the ${plural(rows.length, "tracked tear")} happened in a game (Summer League, preseason, regular season or playoffs); the other ${rows.length - g} happened in practices, workouts or other non-game settings.`,
+    });
+  }
+
   const known = rows.filter((r) => r.mechanism);
   if (known.length) {
     const nc = known.filter((r) => r.mechanism === "non_contact").length;
@@ -143,7 +161,7 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
   if (latest) {
     faq.push({
       q: `What is the most recent ACL or Achilles tear of the ${season} ${league} season?`,
-      a: injurySentence(trackerRowFacts(latest)),
+      a: injurySentence(trackerRowFacts(latest, nba ? "NBA" : "NFL")),
     });
   }
   return faq;
@@ -151,7 +169,7 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
 
 /** Facts for one injury on a player detail page. */
 export function playerInjuryFacts(
-  player: { fullName: string; position: string | null; team: { name: string } | null },
+  player: { fullName: string; position: string | null; team: { name: string } | null; league?: "NFL" | "NBA" },
   injury: {
     injuryType: string;
     injuryDate: string | null;
@@ -165,6 +183,7 @@ export function playerInjuryFacts(
 ): InjuryFacts {
   const latest = injury.updates.at(-1);
   return {
+    league: player.league ?? "NFL",
     name: player.fullName,
     position: player.position,
     teamName: player.team?.name ?? null,

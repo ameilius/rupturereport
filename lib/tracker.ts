@@ -1,6 +1,7 @@
 import type { RowDataPacket } from "mysql2/promise";
 import { pool } from "@/lib/db";
 import { gated } from "@/lib/images";
+import { positionBucket, POSITION_BUCKETS, type League, type PositionBucket } from "@/lib/leagues";
 
 export interface TrackerRow {
   id: number;
@@ -44,10 +45,11 @@ function iso(v: unknown): string | null {
  * whatever their date, so a row's stage is its latest update ever.
  * - season: only tears from that season
  * - before: only tears from seasons earlier than this one
+ * - league: 'NFL' (default) or 'NBA'
  */
-export async function getTrackerRows(opts: { season?: number; before?: number } = {}): Promise<TrackerRow[]> {
-  const where: string[] = [];
-  const params: unknown[] = [];
+export async function getTrackerRows(opts: { season?: number; before?: number; league?: League } = {}): Promise<TrackerRow[]> {
+  const where: string[] = ["p.league = ?"];
+  const params: unknown[] = [opts.league ?? "NFL"];
   if (opts.season != null) { where.push("i.season = ?"); params.push(opts.season); }
   if (opts.before != null) { where.push("i.season < ?"); params.push(opts.before); }
   const [rows] = await pool.query<RowDataPacket[]>(
@@ -91,7 +93,7 @@ export async function getTrackerRows(opts: { season?: number; before?: number } 
     opponentName: r.opponent_name ?? null,
     homeAway: r.home_away ?? null,
     stadium: r.stadium ?? null,
-    surface: r.surface_type ?? null,
+    surface: r.surface_type && r.surface_type !== "hardwood" ? r.surface_type : null,
     surfaceBrand: r.surface_brand ?? null,
     practiceSurface: r.practice_surface ?? null,
     practiceVenue: r.practice_venue ?? null,
@@ -111,11 +113,33 @@ export function computeStats(rows: TrackerRow[]) {
     acl: rows.filter((r) => r.injuryType === "ACL").length,
     achilles: rows.filter((r) => r.injuryType === "Achilles").length,
     games: withSurface.length,
+    inGame: rows.filter((r) => r.isGame).length,
+    inGamePct: rows.length ? Math.round((rows.filter((r) => r.isGame).length / rows.length) * 100) : null,
     artificialPct: withSurface.length ? Math.round((artificial / withSurface.length) * 100) : null,
     naturalPct: withSurface.length ? 100 - Math.round((artificial / withSurface.length) * 100) : null,
     mechanismKnown: known.length,
     nonContactPct: known.length ? Math.round((nonContact / known.length) * 100) : null,
   };
+}
+
+export interface PositionRow {
+  bucket: PositionBucket;
+  total: number;
+  acl: number;
+  achilles: number;
+}
+
+/** NBA: tears per position group (Guards / Wings-forwards / Bigs), always all three groups. */
+export function positionBreakdown(rows: TrackerRow[]): PositionRow[] {
+  return POSITION_BUCKETS.map((bucket) => {
+    const r = rows.filter((x) => positionBucket(x.position) === bucket);
+    return {
+      bucket,
+      total: r.length,
+      acl: r.filter((x) => x.injuryType === "ACL").length,
+      achilles: r.filter((x) => x.injuryType === "Achilles").length,
+    };
+  });
 }
 
 export interface WeeklySeries {
@@ -153,8 +177,8 @@ export function weeklySeries(rows: TrackerRow[], now = new Date()): WeeklySeries
  * (shown separately, never counted in season N totals), plus how many of the
  * previous season's tears have returned.
  */
-export async function getCarryover(season: number) {
-  const earlier = await getTrackerRows({ before: season });
+export async function getCarryover(season: number, league: League = "NFL") {
+  const earlier = await getTrackerRows({ before: season, league });
   const stillRecovering = earlier.filter((r) => r.stage !== "returned");
   const prev = earlier.filter((r) => r.season === season - 1);
   const prevReturnedPlayers = new Set(prev.filter((r) => r.stage === "returned").map((r) => r.slug)).size;

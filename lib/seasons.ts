@@ -6,6 +6,7 @@
  */
 import type { RowDataPacket } from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { cfg, homePath, parseSeasonSegment, seasonHubPath, type League } from "@/lib/leagues";
 
 export const LEAGUE = "NFL";
 
@@ -18,10 +19,11 @@ export interface SeasonInfo {
 }
 
 const TTL = 30_000;
-let cache: { info: SeasonInfo; at: number } | null = null;
+const cache: Partial<Record<League, { info: SeasonInfo; at: number }>> = {};
 
 export function invalidateSeasonCache() {
-  cache = null;
+  delete cache.NFL;
+  delete cache.NBA;
 }
 
 export function parseSeason(v: unknown): number | null {
@@ -31,12 +33,15 @@ export function parseSeason(v: unknown): number | null {
   return n >= 1920 && n <= 2200 ? n : null;
 }
 
-async function load(): Promise<SeasonInfo> {
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT DISTINCT season FROM injuries ORDER BY season DESC");
+async function load(league: League): Promise<SeasonInfo> {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    "SELECT DISTINCT i.season FROM injuries i JOIN players p ON p.id = i.player_id WHERE p.league = ? ORDER BY i.season DESC",
+    [league],
+  );
   const withData = rows.map((r) => Number(r.season)).filter((n) => Number.isInteger(n));
   let setting: number | null = null;
   try {
-    const [s] = await pool.query<RowDataPacket[]>("SELECT v FROM settings WHERE k = 'current_season' LIMIT 1");
+    const [s] = await pool.query<RowDataPacket[]>("SELECT v FROM settings WHERE k = ? LIMIT 1", [cfg(league).settingKey]);
     setting = parseSeason(s[0]?.v);
   } catch {
     setting = null; // settings table not migrated yet
@@ -46,18 +51,21 @@ async function load(): Promise<SeasonInfo> {
   return { current, withData, listed };
 }
 
-export async function getSeasonInfo(): Promise<SeasonInfo> {
-  if (cache && Date.now() - cache.at < TTL) return cache.info;
-  const info = await load();
-  cache = { info, at: Date.now() };
+export async function getSeasonInfo(league: League = "NFL"): Promise<SeasonInfo> {
+  const hit = cache[league];
+  if (hit && Date.now() - hit.at < TTL) return hit.info;
+  const info = await load(league);
+  cache[league] = { info, at: Date.now() };
   return info;
 }
 
-export async function getCurrentSeason(): Promise<number> {
-  return (await getSeasonInfo()).current;
+export async function getCurrentSeason(league: League = "NFL"): Promise<number> {
+  return (await getSeasonInfo(league)).current;
 }
 
-/** Path of a season hub: the current season lives at "/" (/{season} redirects there). */
-export function seasonPath(season: number, current: number): string {
-  return season === current ? "/" : `/${season}`;
+/** Path of a season hub: the current season lives at the league home ("/" or "/nba"); archives at /{season} or /nba/{2025-26}. */
+export function seasonPath(season: number, current: number, league: League = "NFL"): string {
+  return seasonHubPath(league, season, current);
 }
+
+export { homePath, parseSeasonSegment };

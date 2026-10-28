@@ -42,6 +42,9 @@ export function datasetJsonLd(opts: {
   keywords: string[];
   spatialCoverage?: string;
   dateModified?: string;
+  /** false for leagues with no surface data (NBA). */
+  playingSurface?: boolean;
+  leagueFullName?: string;
 }) {
   return {
     "@type": "Dataset",
@@ -66,7 +69,7 @@ export function datasetJsonLd(opts: {
       "team",
       "position",
       "game context",
-      "playing surface",
+      ...(opts.playingSurface === false ? [] : ["playing surface"]),
       "injury mechanism",
       "recovery stage",
     ],
