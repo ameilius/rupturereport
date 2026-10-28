@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { LEAGUE, seasonPath } from "@/lib/seasons";
+import { seasonPath } from "@/lib/seasons";
+import { seasonLabel, type League } from "@/lib/leagues";
 
 /** Season label with a no-JS dropdown of seasons that have data (plus the current one). */
-export default function SeasonSwitcher({ season, current, seasons }: { season: number; current: number; seasons: number[] }) {
-  const label = `${season} ${LEAGUE} season`;
+export default function SeasonSwitcher({ season, current, seasons, league = "NFL" }: { season: number; current: number; seasons: number[]; league?: League }) {
+  const label = `${seasonLabel(league, season)} ${league} season`;
   if (seasons.length <= 1) {
     return <p className="text-xs font-semibold uppercase tracking-widest text-teal">{label}</p>;
   }
@@ -18,11 +19,11 @@ export default function SeasonSwitcher({ season, current, seasons }: { season: n
         {seasons.map((s) => (
           <li key={s}>
             <Link
-              href={seasonPath(s, current)}
+              href={seasonPath(s, current, league)}
               aria-current={s === season ? "page" : undefined}
               className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm hover:bg-border/50 ${s === season ? "text-teal" : "text-text"}`}
             >
-              {s} season
+              {seasonLabel(league, s)} season
               {s === current && <span className="text-[10px] uppercase tracking-wider text-muted">Current</span>}
             </Link>
           </li>

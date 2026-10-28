@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import CopyrightYear from "@/components/CopyrightYear";
+import LeagueSwitcher, { MainNavLinks } from "@/components/LeagueSwitcher";
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-bg/90 backdrop-blur-md supports-[backdrop-filter]:bg-bg/70">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="rr-hdr mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-6 sm:py-0">
         <Link href="/" aria-label="Rupture Report home" className="flex items-center">
           <Image
             src="/brand/logo-horizontal-white-64.png"
@@ -24,9 +26,13 @@ export function SiteHeader() {
             className="h-7 w-auto sm:hidden"
           />
         </Link>
+        <Suspense fallback={<nav aria-label="League" className="rr-sw"><Link href="/">NFL</Link><Link href="/nba">NBA</Link></nav>}>
+          <LeagueSwitcher />
+        </Suspense>
         <nav aria-label="Main" className="flex items-center gap-5 text-sm">
-          <Link href="/" className="text-muted hover:text-text">Tracker</Link>
-          <Link href="/players" className="text-muted hover:text-text">Players</Link>
+          <Suspense fallback={<><Link href="/" className="text-muted hover:text-text">Tracker</Link><Link href="/players" className="text-muted hover:text-text">Players</Link></>}>
+            <MainNavLinks />
+          </Suspense>
           <Link href="/contact" className="text-muted hover:text-text">Contact</Link>
         </nav>
       </div>
@@ -45,14 +51,16 @@ export function SiteFooter() {
               <span className="font-semibold tracking-wide text-text">Rupture Report</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
-              Tracking every NFL ACL and Achilles tear, season by season, from injury to return.
+              Tracking every ACL and Achilles tear, league by league: NFL and NBA, from injury to return.
             </p>
           </div>
           <nav aria-label="Footer">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted">Site</p>
             <ul className="mt-4 space-y-3 text-sm">
-              <li><Link href="/" className="text-text hover:text-teal">Tracker</Link></li>
-              <li><Link href="/players" className="text-text hover:text-teal">Players</Link></li>
+              <li><Link href="/" className="text-text hover:text-teal">NFL tracker</Link></li>
+              <li><Link href="/players" className="text-text hover:text-teal">NFL players</Link></li>
+              <li><Link href="/nba" className="text-text hover:text-teal">NBA tracker</Link></li>
+              <li><Link href="/nba/players" className="text-text hover:text-teal">NBA players</Link></li>
               <li><Link href="/contact" className="text-text hover:text-teal">Contact</Link></li>
               <li><Link href="/terms" className="text-text hover:text-teal">Terms &amp; data license</Link></li>
             </ul>

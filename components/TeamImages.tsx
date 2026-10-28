@@ -1,8 +1,9 @@
 import Image from "next/image";
+import type { League } from "@/lib/leagues";
 import { initials, localImage, teamColors, textOn } from "@/lib/images";
 
-export function TeamBadge({ abbr, size = 24 }: { abbr: string | null; size?: number }) {
-  const [p, s] = teamColors(abbr);
+export function TeamBadge({ abbr, size = 24, league = "NFL" }: { abbr: string | null; size?: number; league?: League }) {
+  const [p, s] = teamColors(abbr, league);
   const text = abbr ?? "?";
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" className="shrink-0">
@@ -18,8 +19,8 @@ export function TeamBadge({ abbr, size = 24 }: { abbr: string | null; size?: num
  * on the dark UI and team-color accents. Outer box is exactly `size`; the mark is inset ~14%.
  * The custom badge fallback sits on the same backing for consistency.
  */
-export function TeamLogo({ abbr, name, logoPath, size = 24 }: {
-  abbr: string | null; name?: string | null; logoPath?: string | null; size?: number;
+export function TeamLogo({ abbr, name, logoPath, size = 24, league = "NFL" }: {
+  abbr: string | null; name?: string | null; logoPath?: string | null; size?: number; league?: League;
 }) {
   const src = localImage(logoPath);
   const label = `${name ?? abbr ?? "Team"} logo`;
@@ -35,16 +36,16 @@ export function TeamLogo({ abbr, name, logoPath, size = 24 }: {
   }
   return (
     <span role="img" aria-label={label} className={chip} style={backing}>
-      <TeamBadge abbr={abbr} size={inner} />
+      <TeamBadge abbr={abbr} size={inner} league={league} />
     </span>
   );
 }
 
-export function PlayerAvatar({ name, team, headshotPath, size = 32, priority = false }: {
-  name: string; team: string | null; headshotPath?: string | null; size?: number; priority?: boolean;
+export function PlayerAvatar({ name, team, headshotPath, size = 32, priority = false, league = "NFL" }: {
+  name: string; team: string | null; headshotPath?: string | null; size?: number; priority?: boolean; league?: League;
 }) {
   const src = localImage(headshotPath);
-  const [p, s] = teamColors(team);
+  const [p, s] = teamColors(team, league);
   if (src) {
     return (
       <Image src={src} alt={`${name} headshot`} width={size} height={size} sizes={`${size}px`} priority={priority}

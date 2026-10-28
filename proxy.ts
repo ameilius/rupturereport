@@ -2,13 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session-token";
 import { playerSlugExists } from "@/lib/player-slugs";
 import { getSeasonInfo, parseSeason } from "@/lib/seasons";
+import { parseSeasonSegment } from "@/lib/leagues";
 
 const PLAYER_PAGE = /^\/players\/([^/]+)\/?$/;
 const PLAYER_STATIC_FILE = /^\/players\/[^/]+\.(?:png|jpe?g|webp|gif|svg|avif|ico)$/i;
+const NBA_SEGMENT = /^\/nba\/([^/.]+)\/?$/;
+const NBA_PLAYER_PAGE = /^\/nba\/players\/([^/]+)\/?$/;
 
 const SINGLE_SEGMENT = /^\/([^/.]+)\/?$/;
 // Real top-level pages; anything else with one segment is a season (/2025) or a 404.
-const TOP_LEVEL = new Set(["players", "terms", "contact", "admin"]);
+const TOP_LEVEL = new Set(["players", "terms", "contact", "admin", "nba"]);
 
 function notFoundRewrite(req: NextRequest) {
   const url = req.nextUrl.clone();
@@ -37,6 +40,37 @@ export async function proxy(req: NextRequest) {
     } catch {
       // DB unavailable: let the page render its own fallback.
     }
+    return NextResponse.next();
+  }
+
+  // NBA season hubs: /nba/{2025-26}. Same rules as the NFL: current season 308s to "/nba", past seasons with data
+  // render, everything else is a real 404. "/nba/players" is a real page.
+  const nbaOne = NBA_SEGMENT.exec(pathname);
+  if (nbaOne && (nbaOne[1] === "players" || nbaOne[1].startsWith("opengraph-image"))) return NextResponse.next();
+  if (nbaOne) {
+    const season = parseSeasonSegment("NBA", nbaOne[1]);
+    if (season == null) return notFoundRewrite(req);
+    try {
+      const info = await getSeasonInfo("NBA");
+      if (season === info.current) {
+        const url = req.nextUrl.clone();
+        url.pathname = "/nba";
+        return NextResponse.redirect(url, 308);
+      }
+      if (!info.withData.includes(season)) return notFoundRewrite(req);
+    } catch {
+      // DB unavailable: let the page render its own fallback.
+    }
+    return NextResponse.next();
+  }
+
+  const nbaPlayer = NBA_PLAYER_PAGE.exec(pathname);
+  if (nbaPlayer) {
+    let slug = nbaPlayer[1];
+    try {
+      slug = decodeURIComponent(slug);
+    } catch {}
+    if ((await playerSlugExists(slug, "NBA")) === false) return notFoundRewrite(req);
     return NextResponse.next();
   }
 
@@ -75,4 +109,4 @@ export async function proxy(req: NextRequest) {
   return res;
 }
 
-export const config = { matcher: ["/admin", "/admin/:path*", "/players/:slug", "/:segment"] };
+export const config = { matcher: ["/admin", "/admin/:path*", "/players/:slug", "/:segment", "/nba/:segment", "/nba/players/:slug"] };

@@ -6,6 +6,7 @@ import type { TrackerRow } from "@/lib/tracker";
 import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
 import { MiniStageBar } from "@/components/RecoveryProgress";
 import InjuryBodyIcon from "@/components/InjuryBodyIcon";
+import { POSITION_BUCKETS, playerPath, positionBucket, type League } from "@/lib/leagues";
 
 const STAGE: Record<string, string> = {
   diagnosis: "Diagnosis", surgery: "Surgery", immobilization: "Immobilization",
@@ -38,8 +39,14 @@ function Badge({ type, side }: { type: string; side?: string | null }) {
   );
 }
 
-function context(r: TrackerRow) {
+function context(r: TrackerRow, league: League = "NFL") {
   if (!r.isGame) return "Practice";
+  if (league === "NBA") {
+    const pre = r.phase === "summer_league" ? "Summer" : r.phase === "preseason" ? "Pre" : r.phase === "playoffs" ? "Playoffs" : "";
+    const g = r.week ? `G${r.week}` : "";
+    const opp = r.opponent ? `${r.homeAway === "away" ? "@" : "vs"} ${r.opponent}` : "";
+    return [pre, g, opp].filter(Boolean).join(" ") || "Game";
+  }
   const pre = r.phase === "preseason" ? "Pre" : r.phase === "playoffs" ? "Playoffs" : r.week ? `Wk ${r.week}` : "Game";
   const opp = r.opponent ? `${r.homeAway === "away" ? "@" : "vs"} ${r.opponent}` : "";
   return `${pre} ${opp}`.trim();
@@ -59,6 +66,7 @@ export default function InjuryTracker({
   idPrefix = "t",
   showYear = false,
   empty = "No tears tracked yet.",
+  league = "NFL",
 }: {
   rows: TrackerRow[];
   filters?: boolean;
@@ -67,12 +75,15 @@ export default function InjuryTracker({
   idPrefix?: string;
   showYear?: boolean;
   empty?: string;
+  league?: League;
 }) {
+  const nba = league === "NBA";
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const [team, setTeam] = useState("");
   const [surface, setSurface] = useState("");
   const [phase, setPhase] = useState("");
+  const [pos, setPos] = useState("");
   const dq = useDeferredValue(q);
 
   const teams = useMemo(
@@ -86,13 +97,14 @@ export default function InjuryTracker({
       if (type && r.injuryType !== type) return false;
       if (team && r.team !== team) return false;
       if (phase && r.phase !== phase) return false;
+      if (pos && positionBucket(r.position) !== pos) return false;
       if (surface === "practice" ? r.isGame : surface && r.surface !== surface) return false;
       if (needle && !`${r.name} ${r.teamName ?? ""} ${r.team ?? ""} ${r.position ?? ""}`.toLowerCase().includes(needle)) return false;
       return true;
     });
-  }, [rows, dq, type, team, surface, phase]);
+  }, [rows, dq, type, team, surface, phase, pos]);
 
-  const active = q || type || team || surface || phase;
+  const active = q || type || team || surface || phase || pos;
 
   return (
     <section aria-labelledby={`${idPrefix}-heading`} className="mt-8">
@@ -120,21 +132,33 @@ export default function InjuryTracker({
             <option value="">All teams</option>
             {teams.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
-          <label className="sr-only" htmlFor={`${idPrefix}-fs`}>Surface</label>
-          <select id={`${idPrefix}-fs`} className={sel} value={surface} onChange={(e) => setSurface(e.target.value)}>
-            <option value="">All surfaces</option>
-            <option value="artificial">Artificial</option>
-            <option value="natural">Natural</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="practice">Practice (no game)</option>
-          </select>
-          <label className="sr-only" htmlFor={`${idPrefix}-fp`}>Phase</label>
-          <select id={`${idPrefix}-fp`} className={sel} value={phase} onChange={(e) => setPhase(e.target.value)}>
-            <option value="">All phases</option>
-            <option value="preseason">Offseason / preseason</option>
-            <option value="regular">Regular season</option>
-            <option value="playoffs">Playoffs</option>
-          </select>
+          {nba ? (
+            <>
+              <label className="sr-only" htmlFor={`${idPrefix}-fpos`}>Position</label>
+              <select id={`${idPrefix}-fpos`} className={sel} value={pos} onChange={(e) => setPos(e.target.value)}>
+                <option value="">All positions</option>
+                {POSITION_BUCKETS.map((b) => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </>
+          ) : (
+            <>
+              <label className="sr-only" htmlFor={`${idPrefix}-fs`}>Surface</label>
+              <select id={`${idPrefix}-fs`} className={sel} value={surface} onChange={(e) => setSurface(e.target.value)}>
+                <option value="">All surfaces</option>
+                <option value="artificial">Artificial</option>
+                <option value="natural">Natural</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="practice">Practice (no game)</option>
+              </select>
+              <label className="sr-only" htmlFor={`${idPrefix}-fp`}>Phase</label>
+              <select id={`${idPrefix}-fp`} className={sel} value={phase} onChange={(e) => setPhase(e.target.value)}>
+                <option value="">All phases</option>
+                <option value="preseason">Offseason / preseason</option>
+                <option value="regular">Regular season</option>
+                <option value="playoffs">Playoffs</option>
+              </select>
+            </>
+          )}
         </div>
         <p className="text-sm text-muted sm:ml-auto" aria-live="polite">
           {filtered.length} of {rows.length}
@@ -142,7 +166,7 @@ export default function InjuryTracker({
             <button
               type="button"
               className="ml-3 text-teal hover:underline"
-              onClick={() => { setQ(""); setType(""); setTeam(""); setSurface(""); setPhase(""); }}
+              onClick={() => { setQ(""); setType(""); setTeam(""); setSurface(""); setPhase(""); setPos(""); }}
             >
               Clear
             </button>
@@ -168,21 +192,21 @@ export default function InjuryTracker({
                   <th scope="col" className="px-4 py-3">Date</th>
                   <th scope="col" className="px-4 py-3">Stage</th>
                   <th scope="col" className="px-4 py-3">Game</th>
-                  <th scope="col" className="px-4 py-3">Surface</th>
+                  {!nba && <th scope="col" className="px-4 py-3">Surface</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((r) => (
                   <tr key={r.id} className="row-accent">
                     <td className="px-4 py-2.5 font-medium">
-                      <Link href={`/players/${r.slug}`} className="row-name flex items-center gap-3 hover:text-teal">
-                        <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={32} />
+                      <Link href={playerPath(league, r.slug)} className="row-name flex items-center gap-3 hover:text-teal">
+                        <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={32} league={league} />
                         {r.name}
                       </Link>
                     </td>
                     <td className="px-4 py-2.5 text-muted" title={r.teamName ?? undefined}>
                       <span className="flex items-center gap-2">
-                        <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={22} />
+                        <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={22} league={league} />
                         {r.team ?? "—"}
                       </span>
                     </td>
@@ -190,10 +214,12 @@ export default function InjuryTracker({
                     <td className="px-4 py-3"><Badge type={r.injuryType} side={r.bodySide} /></td>
                     <td className="px-4 py-3 whitespace-nowrap"><time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate, showYear)}</time></td>
                     <td className="px-4 py-3 whitespace-nowrap"><MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></td>
-                    <td className="px-4 py-3 whitespace-nowrap text-muted">{context(r)}</td>
-                    <td className="px-4 py-3" title={r.stadium ? `${r.stadium}${r.surfaceBrand ? ` · ${r.surfaceBrand}` : ""}` : r.practiceVenue ?? undefined}>
-                      {surfaceLabel(r)}
-                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted" title={nba ? r.stadium ?? undefined : undefined}>{context(r, league)}</td>
+                    {!nba && (
+                      <td className="px-4 py-3" title={r.stadium ? `${r.stadium}${r.surfaceBrand ? ` · ${r.surfaceBrand}` : ""}` : r.practiceVenue ?? undefined}>
+                        {surfaceLabel(r)}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -203,24 +229,24 @@ export default function InjuryTracker({
           <ul className="mt-4 space-y-3 md:hidden">
             {filtered.map((r) => (
               <li key={r.id}>
-                <Link href={`/players/${r.slug}`} className="glass block rounded-xl border p-4 active:bg-border/40">
+                <Link href={playerPath(league, r.slug)} className="glass block rounded-xl border p-4 active:bg-border/40">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={44} />
+                      <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={44} league={league} />
                       <div>
                         <p className="font-semibold">{r.name}</p>
                         <p className="flex items-center gap-1.5 text-sm text-muted">
-                          <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={18} />
+                          <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={18} league={league} />
                           {[r.position, r.team].filter(Boolean).join(" · ")}
                         </p>
                       </div>
                     </div>
                     <Badge type={r.injuryType} side={r.bodySide} />
                   </div>
-                  <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <dl className={`mt-3 grid ${nba ? "grid-cols-2" : "grid-cols-3"} gap-2 text-xs`}>
                     <div><dt className="text-muted">Date</dt><dd>{fmt(r.injuryDate, showYear)}</dd></div>
-                    <div><dt className="text-muted">Where</dt><dd>{context(r)}</dd></div>
-                    <div><dt className="text-muted">Surface</dt><dd>{surfaceLabel(r)}</dd></div>
+                    <div><dt className="text-muted">{nba ? "Game" : "Where"}</dt><dd>{context(r, league)}</dd></div>
+                    {!nba && <div><dt className="text-muted">Surface</dt><dd>{surfaceLabel(r)}</dd></div>}
                   </dl>
                   <div className="mt-3 flex items-center gap-2 text-xs text-muted">Stage: <MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></div>
                 </Link>
