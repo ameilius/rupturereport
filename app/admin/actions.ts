@@ -27,12 +27,15 @@ import {
   getPlayer,
   getStadiumLeague,
   getTeamLeague,
+  positionValidFor,
+  countPlayerInjuries,
   slugify,
   uniqueSlug,
 } from "@/lib/admin-db";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { deleteUpload, storeUpload } from "@/lib/uploads";
+import { officialImagePath } from "@/lib/leagues";
 import { getCurrentSeason, invalidateSeasonCache, parseSeason } from "@/lib/seasons";
 
 // ---------- helpers ----------
@@ -125,6 +128,9 @@ export async function savePlayerAction(fd: FormData) {
   const league = oneOf(fd, "league", LEAGUE_OPTIONS) ?? ((existingPlayer?.league as string | undefined) === "NBA" ? "NBA" : "NFL");
   const teamId = int(fd, "team_id");
   if (teamId != null && (await getTeamLeague(teamId)) !== league) fail(back, `That team is not an ${league} team`);
+  if (!positionValidFor(league, position)) fail(back, `${position} is not an ${league} position`);
+  if (existingPlayer && existingPlayer.league !== league && (await countPlayerInjuries(Number(existingPlayer.id))) > 0)
+    fail(back, "This player has injuries recorded; delete them before changing the league");
   const fields = {
     first_name: first,
     last_name: last,
@@ -166,6 +172,9 @@ export async function saveStadiumAction(fd: FormData) {
   const city = str(fd, "city", 64);
   const surfaceType = oneOf(fd, "surface_type", SURFACE_TYPES);
   if (!name || !city || !surfaceType) fail(back, "Name, city and surface type are required");
+  const stadiumLeague = oneOf(fd, "league", LEAGUE_OPTIONS) ?? "NFL";
+  if (stadiumLeague === "NBA" && surfaceType !== "hardwood") fail(back, "NBA arenas use the hardwood surface type");
+  if (stadiumLeague === "NFL" && surfaceType === "hardwood") fail(back, "Hardwood is only for NBA arenas");
   const fields = {
     league: oneOf(fd, "league", LEAGUE_OPTIONS) ?? "NFL",
     name,
@@ -293,7 +302,13 @@ async function imageTarget(fd: FormData) {
   const back = `${t.back}/${id}`;
   const r = await getImageRow(t.table, t.column, id);
   if (!r) fail(t.back, "Not found");
-  return { kind, id, t, back, slug: String(r.slug), current: (r.path as string | null) ?? null };
+  return {
+    kind, id, t, back,
+    slug: String(r.slug),
+    league: (r.league === "NBA" ? "NBA" : "NFL") as "NFL" | "NBA",
+    abbreviation: (r.abbreviation as string | null) ?? null,
+    current: (r.path as string | null) ?? null,
+  };
 }
 
 function revalidateImage(kind: "players" | "teams", slug: string) {
@@ -319,11 +334,12 @@ export async function uploadImageAction(fd: FormData) {
 }
 
 export async function removeImageAction(fd: FormData) {
-  const { kind, id, t, back, slug, current } = await imageTarget(fd);
+  const { kind, id, t, back, slug, current, league, abbreviation } = await imageTarget(fd);
   const mode = str(fd, "mode") === "official" ? "official" : "none";
   let next: string | null = null;
   if (mode === "official") {
-    const official = `/${kind}/${slug}.png`;
+    // NFL: /teams/{slug}.png, /players/{slug}.png. NBA team logos are /teams/nba/{ABBR}.png.
+    const official = officialImagePath(kind, slug, league, abbreviation);
     if (!existsSync(join(process.cwd(), "public", official))) fail(back, "No official image on file");
     next = official;
   }

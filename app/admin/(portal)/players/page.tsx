@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { searchPlayers } from "@/lib/admin-db";
-import { Flash, Loading, PageTitle, btnCls, inputCls, linkCls, type SP } from "@/components/admin/ui";
+import { Flash, LeagueBadge, LeagueTabs, Loading, PageTitle, btnCls, inputCls, linkCls, pickLeague, type SP } from "@/components/admin/ui";
 
 export default function PlayersAdmin({ searchParams }: { searchParams: SP }) {
   return (
@@ -24,11 +24,14 @@ async function Content({ searchParams }: { searchParams: SP }) {
   await requireAdmin();
   const sp = await searchParams;
   const term = typeof sp.q === "string" ? sp.q.trim().slice(0, 100) : "";
-  const players = await searchPlayers(term);
+  const league = pickLeague(sp);
+  const players = await searchPlayers(term, league);
   return (
     <>
       <Flash searchParams={sp} />
+      <LeagueTabs basePath="/admin/players" current={league} params={term ? { q: term } : {}} />
       <form role="search" className="mb-6 flex gap-2">
+        {league && <input type="hidden" name="league" value={league} />}
         <label htmlFor="q" className="sr-only">Search players</label>
         <input id="q" name="q" defaultValue={term} placeholder="Search by name…" className={`${inputCls} mt-0`} />
         <button className={btnCls}>Search</button>
@@ -40,7 +43,7 @@ async function Content({ searchParams }: { searchParams: SP }) {
           <table className="w-full text-left text-sm">
             <thead className="bg-surface text-muted">
               <tr>
-                <th className="p-3">Name</th><th className="p-3">Pos</th>
+                <th className="p-3">Name</th><th className="p-3">League</th><th className="p-3">Pos</th>
                 <th className="p-3">Team</th><th className="p-3">Injuries</th>
                 <th className="p-3"><span className="sr-only">Actions</span></th>
               </tr>
@@ -60,8 +63,12 @@ async function Content({ searchParams }: { searchParams: SP }) {
                       {String(p.first_name)} {String(p.last_name)}
                     </Link>
                   </td>
+                  <td className="p-3"><LeagueBadge league={p.league} /></td>
                   <td className="p-3">{String(p.position ?? "")}</td>
-                  <td className="p-3">{p.team ? `${p.league === "NBA" ? "NBA · " : ""}${String(p.team)}` : ""}</td>
+                  <td className="p-3">
+                    {p.team ? String(p.team) : ""}
+                    {p.status_note ? <span className="ml-2 text-xs text-muted">{String(p.status_note)}</span> : null}
+                  </td>
                   <td className="p-3">{String(p.injury_count)}</td>
                   <td className="p-3 text-right">
                     <Link href={`/admin/players/${p.id}`} className={`${linkCls} whitespace-nowrap`}>

@@ -55,20 +55,23 @@ export const exec = async (sql: string, params: unknown[] = []) =>
 
 export type Row = Record<string, unknown> & RowDataPacket;
 
-export async function getCounts() {
+/** Dashboard counts for one league (NFL | NBA); every table is scoped through its league column. */
+export async function getCounts(league: "NFL" | "NBA") {
   const [r] = await q<Row>(
-    `SELECT (SELECT COUNT(*) FROM players) players,
-            (SELECT COUNT(*) FROM injuries) injuries,
-            (SELECT COUNT(*) FROM progress_updates) updates,
-            (SELECT COUNT(*) FROM stadiums) stadiums,
-            (SELECT COUNT(*) FROM teams) teams`,
+    `SELECT (SELECT COUNT(*) FROM players WHERE league = ?) players,
+            (SELECT COUNT(*) FROM injuries i JOIN players p ON p.id = i.player_id WHERE p.league = ?) injuries,
+            (SELECT COUNT(*) FROM progress_updates u JOIN injuries i ON i.id = u.injury_id
+               JOIN players p ON p.id = i.player_id WHERE p.league = ?) updates,
+            (SELECT COUNT(*) FROM stadiums WHERE league = ?) stadiums,
+            (SELECT COUNT(*) FROM teams WHERE league = ?) teams`,
+    [league, league, league, league, league],
   );
   return r;
 }
 
 export const recentInjuries = (limit = 10) =>
   q<Row>(
-    `SELECT i.id, i.injury_type, i.injury_date, p.first_name, p.last_name, p.id player_id
+    `SELECT i.id, i.injury_type, i.injury_date, i.season, p.league, p.first_name, p.last_name, p.id player_id
        FROM injuries i JOIN players p ON p.id = i.player_id
       ORDER BY i.created_at DESC, i.id DESC LIMIT ?`,
     [limit],
@@ -77,7 +80,7 @@ export const recentInjuries = (limit = 10) =>
 export const recentUpdates = (limit = 10) =>
   q<Row>(
     `SELECT u.id, u.stage, u.update_date, u.status_label, u.injury_id,
-            p.first_name, p.last_name, i.injury_type
+            p.first_name, p.last_name, p.league, i.injury_type
        FROM progress_updates u
        JOIN injuries i ON i.id = u.injury_id
        JOIN players p ON p.id = i.player_id
@@ -101,15 +104,19 @@ export const getStadiumLeague = async (id: number): Promise<string | null> =>
 export const getStadium = async (id: number) =>
   (await q<Row>(`SELECT * FROM stadiums WHERE id = ?`, [id]))[0] ?? null;
 
-export const searchPlayers = (term: string) =>
+export const searchPlayers = (term: string, league?: string | null) =>
   q<Row>(
-    `SELECT p.id, p.league, p.first_name, p.last_name, p.slug, p.position, p.headshot_path, t.abbreviation team,
+    `SELECT p.id, p.league, p.first_name, p.last_name, p.slug, p.position, p.headshot_path, p.status_note, t.abbreviation team,
             (SELECT COUNT(*) FROM injuries i WHERE i.player_id = p.id) injury_count
        FROM players p LEFT JOIN teams t ON t.id = p.team_id
-      WHERE ? = '' OR CONCAT(p.first_name, ' ', p.last_name) LIKE ? OR p.slug LIKE ?
+      WHERE (? IS NULL OR p.league = ?)
+        AND (? = '' OR CONCAT(p.first_name, ' ', p.last_name) LIKE ? OR p.slug LIKE ?)
       ORDER BY p.last_name, p.first_name LIMIT 200`,
-    [term, `%${term}%`, `%${term}%`],
+    [league ?? null, league ?? null, term, `%${term}%`, `%${term}%`],
   );
+
+export const countPlayerInjuries = async (playerId: number) =>
+  Number((await q<Row>(`SELECT COUNT(*) n FROM injuries WHERE player_id = ?`, [playerId]))[0]?.n ?? 0);
 
 export const getPlayer = async (id: number) =>
   (await q<Row>(`SELECT * FROM players WHERE id = ?`, [id]))[0] ?? null;
@@ -149,14 +156,26 @@ export async function getImageRow(
 ) {
   const sql =
     table === "players"
-      ? `SELECT slug, headshot_path AS path FROM players WHERE id = ?`
-      : `SELECT slug, logo_path AS path FROM teams WHERE id = ?`;
+      ? `SELECT slug, league, NULL AS abbreviation, headshot_path AS path FROM players WHERE id = ?`
+      : `SELECT slug, league, abbreviation, logo_path AS path FROM teams WHERE id = ?`;
   void column;
   return (await q<Row>(sql, [id]))[0] ?? null;
 }
 
-export const listTeamsFull = () =>
-  q<Row>(`SELECT id, abbreviation, name, slug, conference, division, logo_path FROM teams ORDER BY name`);
+export const listTeamsFull = (league?: string | null) =>
+  q<Row>(
+    `SELECT id, league, abbreviation, name, slug, conference, division, logo_path FROM teams
+      WHERE (? IS NULL OR league = ?) ORDER BY league, name`,
+    [league ?? null, league ?? null],
+  );
+
+/** Positions valid for a league. 'C' (center) exists in both. */
+export const NBA_POSITIONS = ["PG", "SG", "SF", "PF", "G", "F", "C", "G-F", "F-G", "F-C", "C-F"] as const;
+export function positionValidFor(league: string, position: string): boolean {
+  const nba = (NBA_POSITIONS as readonly string[]).includes(position);
+  const nfl = (POSITIONS as readonly string[]).includes(position) && !["PG", "SG", "SF", "PF", "G", "F", "G-F", "F-G", "F-C", "C-F"].includes(position);
+  return league === "NBA" ? nba : nfl;
+}
 
 export const getTeam = async (id: number) =>
   (await q<Row>(`SELECT * FROM teams WHERE id = ?`, [id]))[0] ?? null;

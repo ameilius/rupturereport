@@ -4,7 +4,7 @@ import { logoutAction } from "../actions";
 const nav = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/players", label: "Players" },
-  { href: "/admin/stadiums", label: "Stadiums" },
+  { href: "/admin/stadiums", label: "Stadiums & arenas" },
   { href: "/admin/teams", label: "Teams" },
   { href: "/admin/settings", label: "Settings" },
 ];

@@ -6,12 +6,20 @@ import {
   INJURY_TYPES,
   LEAGUE_OPTIONS,
   MECHANISMS,
+  NBA_POSITIONS,
   PHASES,
   POSITIONS,
   SURFACE_TYPES,
   type Row,
 } from "@/lib/admin-db";
 import { Field, Input, Select, Textarea, btnCls, btnGhostCls, fmtDate } from "./ui";
+
+const NBA_ONLY = ["PG", "SG", "SF", "PF", "G", "F", "G-F", "F-G", "F-C", "C-F"];
+/** NFL positions, then NBA positions labelled "(NBA)". C is shared. */
+const POSITION_OPTIONS = [
+  ...POSITIONS.filter((p) => !NBA_ONLY.includes(p)).map((p) => ({ value: p, label: p })),
+  ...NBA_POSITIONS.map((p) => ({ value: p, label: `${p} (NBA)` })).filter((o) => o.value !== "C"),
+];
 
 const grid = "grid grid-cols-1 gap-4 sm:grid-cols-2";
 
@@ -35,8 +43,8 @@ export function PlayerForm({ player, teams }: { player?: Row | null; teams: Row[
         <Field label="League *" name="league" hint="The team must belong to the same league.">
           <Select name="league" options={LEAGUE_OPTIONS} defaultValue={v("league") ?? "NFL"} required />
         </Field>
-        <Field label="Position *" name="position" hint="NBA: the listed position (G, F, C, G-F …).">
-          <Select name="position" options={POSITIONS} defaultValue={v("position")} empty="—" required />
+        <Field label="Position *" name="position" hint="NBA: store the listed position (G, F, C, G-F …); the site groups it into Guards / Wings-forwards / Bigs.">
+          <Select name="position" options={POSITION_OPTIONS} defaultValue={v("position")} empty="—" required />
         </Field>
         <Field label="Team" name="team_id">
           <Select
@@ -85,7 +93,7 @@ export function StadiumForm({ stadium }: { stadium?: Row | null }) {
         <Field label="State" name="state" hint="2-letter code">
           <Input name="state" maxLength={2} defaultValue={v("state")} />
         </Field>
-        <Field label="Surface type *" name="surface_type">
+        <Field label="Surface type *" name="surface_type" hint="NBA arenas: hardwood. NFL: natural, hybrid or artificial.">
           <Select name="surface_type" options={SURFACE_TYPES} defaultValue={v("surface_type")} empty="—" required />
         </Field>
         <Field label="Surface brand" name="surface_brand">
@@ -110,6 +118,7 @@ export function InjuryForm({
   stadiums,
   allTypes,
   defaultSeason,
+  league = "NFL",
 }: {
   injury?: Row | null;
   playerId: number;
@@ -118,7 +127,10 @@ export function InjuryForm({
   allTypes?: boolean;
   /** New injuries default to the current season (settings.current_season). */
   defaultSeason?: number;
+  /** The player's league: scopes the phase options and labels. */
+  league?: "NFL" | "NBA";
 }) {
+  const nba = league === "NBA";
   const v = (k: string) => (injury?.[k] == null ? undefined : String(injury[k]));
   const current = v("injury_type");
   const types =
@@ -136,23 +148,23 @@ export function InjuryForm({
         <Field label="Injury date *" name="injury_date">
           <Input name="injury_date" type="date" required defaultValue={injury ? fmtDate(injury.injury_date) : undefined} />
         </Field>
-        <Field label="Season" name="season" hint="League year: NFL 2026 = 2026 season; NBA 2026 = 2026-27.">
+        <Field label="Season" name="season" hint={nba ? "Start year of the league season: 2026 = 2026-27 (includes Summer League, offseason, preseason and playoffs of that league year)." : "The NFL season year (2026 = 2026 season)."}>
           <Input name="season" type="number" min={2000} max={2100} defaultValue={v("season") ?? (defaultSeason != null ? String(defaultSeason) : undefined)} required />
         </Field>
-        <Field label="Week / game #" name="week" hint="NFL week; NBA game number.">
-          <Input name="week" type="number" min={0} max={23} defaultValue={v("week")} />
+        <Field label={nba ? "Game #" : "Week"} name="week" hint={nba ? "Game number of the team's season or series (e.g. 4 for Game 4)." : undefined}>
+          <Input name="week" type="number" min={0} max={nba ? 110 : 23} defaultValue={v("week")} />
         </Field>
         <Field label="Phase" name="phase">
-          <Select name="phase" options={PHASES} defaultValue={v("phase") ?? "regular"} empty="—" />
+          <Select name="phase" options={nba ? PHASES : PHASES.filter((p) => p !== "summer_league")} defaultValue={v("phase") ?? "regular"} empty="—" />
         </Field>
-        <Field label="Stadium / arena" name="stadium_id">
+        <Field label={nba ? "Arena" : "Stadium"} name="stadium_id">
           <Select
             name="stadium_id"
             empty="—"
             defaultValue={v("stadium_id")}
             options={stadiums.map((s) => ({
               value: Number(s.id),
-              label: `${s.name}${s.surface_type ? ` (${s.surface_type})` : ""}`,
+              label: `${s.name}${s.surface_type && !nba ? ` (${s.surface_type})` : ""}`,
             }))}
           />
         </Field>

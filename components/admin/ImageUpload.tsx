@@ -8,18 +8,18 @@ import { isCustomUpload, officialImagesEnabled } from "@/lib/images";
 export function ImageUpload({
   kind,
   id,
-  slug,
+  officialPath,
   path,
   label,
 }: {
   kind: "players" | "teams";
   id: number;
-  slug: string;
+  /** Bundled official image under /public (league-aware; see officialImagePath). */
+  officialPath: string;
   path: string | null;
   label: string;
 }) {
   const custom = isCustomUpload(path);
-  const officialPath = `/${kind}/${slug}.png`;
   const hasOfficial = existsSync(join(process.cwd(), "public", officialPath));
   const official = !custom && !!path;
   const shownPublicly = custom || (official && officialImagesEnabled());

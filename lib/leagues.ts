@@ -58,6 +58,11 @@ export function asLeague(v: unknown): League {
 }
 
 /** NFL season labels are the year ("2026"); NBA seasons span two years ("2026-27"). */
+/** Where a player's/team's bundled official image lives under /public. NBA team logos are keyed by abbreviation. */
+export function officialImagePath(kind: "players" | "teams", slug: string, league: League, abbreviation?: string | null): string {
+  return kind === "teams" && league === "NBA" && abbreviation ? `/teams/nba/${abbreviation}.png` : `/${kind}/${slug}.png`;
+}
+
 export function seasonLabel(league: League, season: number): string {
   return league === "NBA" ? `${season}-${String((season + 1) % 100).padStart(2, "0")}` : String(season);
 }

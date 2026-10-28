@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { saveSettingsAction } from "@/app/admin/actions";
+import { seasonLabel } from "@/lib/leagues";
 import { getSeasonInfo, invalidateSeasonCache } from "@/lib/seasons";
 import { Card, Field, Flash, Input, Loading, PageTitle, btnCls, type SP } from "@/components/admin/ui";
 
@@ -36,7 +37,7 @@ async function Content({ searchParams }: { searchParams: SP }) {
           <Field
             label="Current NBA season (start year)"
             name="current_season_nba"
-            hint={`/nba shows this season (2026 = 2026-27), /nba/${nba.current}-${String((nba.current + 1) % 100).padStart(2, "0")} redirects to /nba, and new NBA injuries default to it. Seasons with data: ${nba.withData.join(", ") || "none"}.`}
+            hint={`/nba shows this season (2026 = 2026-27), /nba/${seasonLabel("NBA", nba.current)} redirects to /nba, and new NBA injuries default to it. Seasons with data: ${nba.withData.map((y) => seasonLabel("NBA", y)).join(", ") || "none"}.`}
           >
             <Input name="current_season_nba" type="number" min={1946} max={2200} required defaultValue={String(nba.current)} />
           </Field>

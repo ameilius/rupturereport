@@ -31,11 +31,11 @@ async function Content({ searchParams }: { searchParams: SP }) {
   return (
     <>
       <PageTitle>
-        New injury: {String(player.first_name)} {String(player.last_name)}
+        New injury: {String(player.first_name)} {String(player.last_name)} ({league})
       </PageTitle>
       <Card>
         <Flash searchParams={sp} />
-        <InjuryForm playerId={playerId} teams={teams} stadiums={stadiums} allTypes={allTypes} defaultSeason={season} />
+        <InjuryForm playerId={playerId} teams={teams} stadiums={stadiums} allTypes={allTypes} defaultSeason={season} league={league} />
         {!allTypes && (
           <p className="mt-4 text-sm text-muted">
             Need MCL/other?{" "}

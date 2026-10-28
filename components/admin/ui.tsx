@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 export const inputCls =
@@ -145,3 +146,59 @@ export function fmtDate(v: unknown): string {
 }
 
 export type SP = Promise<Record<string, string | string[] | undefined>>;
+
+export type LeagueFilter = "NFL" | "NBA" | null;
+
+/** ?league=NFL|NBA from the query string (anything else = all leagues). */
+export function pickLeague(sp: Record<string, string | string[] | undefined>): LeagueFilter {
+  const v = sp.league;
+  return v === "NFL" || v === "NBA" ? v : null;
+}
+
+export function LeagueBadge({ league }: { league: unknown }) {
+  const nba = league === "NBA";
+  return (
+    <span
+      className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wider ${
+        nba ? "bg-amber/15 text-amber" : "bg-teal/15 text-teal"
+      }`}
+    >
+      {nba ? "NBA" : "NFL"}
+    </span>
+  );
+}
+
+/** All / NFL / NBA filter links; keeps other query params (e.g. the player search). */
+export function LeagueTabs({
+  basePath,
+  current,
+  params = {},
+}: {
+  basePath: string;
+  current: LeagueFilter;
+  params?: Record<string, string>;
+}) {
+  const href = (l: LeagueFilter) => {
+    const qs = new URLSearchParams(params);
+    if (l) qs.set("league", l);
+    const s = qs.toString();
+    return s ? `${basePath}?${s}` : basePath;
+  };
+  const tabs: [string, LeagueFilter][] = [["All", null], ["NFL", "NFL"], ["NBA", "NBA"]];
+  return (
+    <nav aria-label="League filter" className="mb-4 flex gap-2 text-sm">
+      {tabs.map(([label, l]) => (
+        <Link
+          key={label}
+          href={href(l)}
+          aria-current={current === l ? "page" : undefined}
+          className={`rounded-lg border px-3 py-1.5 ${
+            current === l ? "border-teal bg-teal/10 text-teal" : "border-border text-muted hover:border-teal"
+          }`}
+        >
+          {label}
+        </Link>
+      ))}
+    </nav>
+  );
+}

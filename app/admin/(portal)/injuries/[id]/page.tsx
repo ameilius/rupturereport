@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { seasonLabel } from "@/lib/leagues";
 import { STAGES, getInjury, getUpdates, listStadiums, listTeams } from "@/lib/admin-db";
 import { addUpdateAction, deleteInjuryAction, deleteUpdateAction } from "@/app/admin/actions";
 import { InjuryForm } from "@/components/admin/forms";
@@ -55,6 +56,9 @@ async function Content({ params, searchParams }: Props) {
             <h1 className="text-2xl font-bold sm:text-3xl">
               {String(injury.injury_type)} injury — {fmtDate(injury.injury_date)}
             </h1>
+            <p className="text-sm text-muted">
+              {league} · {seasonLabel(league, Number(injury.season))} season
+            </p>
           </div>
         </div>
         <Link href={`/admin/players/${injury.player_id}`} className={btnCls}>
@@ -117,7 +121,7 @@ async function Content({ params, searchParams }: Props) {
       </Card>
 
       <Card title="Injury details">
-        <InjuryForm injury={injury} playerId={Number(injury.player_id)} teams={teams} stadiums={stadiums} />
+        <InjuryForm injury={injury} playerId={Number(injury.player_id)} teams={teams} stadiums={stadiums} league={league} />
       </Card>
 
       <Card title="Danger zone">

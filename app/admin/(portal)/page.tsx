@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { getCounts, recentInjuries, recentUpdates } from "@/lib/admin-db";
-import { Card, Loading, PageTitle, btnCls, fmtDate, linkCls } from "@/components/admin/ui";
+import { Card, LeagueBadge, Loading, PageTitle, btnCls, fmtDate, linkCls } from "@/components/admin/ui";
 
 export default function Dashboard() {
   return (
@@ -21,28 +21,43 @@ export default function Dashboard() {
 async function DashboardContent() {
   await connection();
   await requireAdmin();
-  const [counts, injuries, updates] = await Promise.all([
-    getCounts(),
+  const [nfl, nba, injuries, updates] = await Promise.all([
+    getCounts("NFL"),
+    getCounts("NBA"),
     recentInjuries(),
     recentUpdates(),
   ]);
-  const stats = [
-    ["Players", counts.players],
-    ["Injuries", counts.injuries],
-    ["Updates", counts.updates],
-    ["Stadiums", counts.stadiums],
-    ["Teams", counts.teams],
-  ] as const;
+  const statsFor = (c: typeof nfl) =>
+    [
+      ["Players", c.players],
+      ["Injuries", c.injuries],
+      ["Updates", c.updates],
+      ["Stadiums / arenas", c.stadiums],
+      ["Teams", c.teams],
+    ] as const;
   return (
     <div className="space-y-6">
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {stats.map(([label, n]) => (
-          <div key={label} className="rounded-xl border border-border bg-surface p-4">
-            <dt className="text-xs uppercase tracking-wider text-muted">{label}</dt>
-            <dd className="mt-1 text-2xl font-bold">{String(n)}</dd>
-          </div>
-        ))}
-      </dl>
+      {(
+        [
+          ["NFL", nfl],
+          ["NBA", nba],
+        ] as const
+      ).map(([league, c]) => (
+        <section key={league} aria-label={`${league} counts`}>
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted">
+            <LeagueBadge league={league} /> {league}
+            <Link href={`/admin/players?league=${league}`} className={`${linkCls} font-normal`}>Players →</Link>
+          </h2>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {statsFor(c).map(([label, n]) => (
+              <div key={label} className="rounded-xl border border-border bg-surface p-4">
+                <dt className="text-xs uppercase tracking-wider text-muted">{label}</dt>
+                <dd className="mt-1 text-2xl font-bold">{String(n)}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Recent injuries">
           {injuries.length === 0 ? (
@@ -54,6 +69,7 @@ async function DashboardContent() {
                   <Link href={`/admin/injuries/${i.id}`} className={linkCls}>
                     {String(i.first_name)} {String(i.last_name)} — {String(i.injury_type)}
                   </Link>
+                  <LeagueBadge league={i.league} />
                   <span className="text-sm text-muted">{fmtDate(i.injury_date)}</span>
                 </li>
               ))}
@@ -71,6 +87,7 @@ async function DashboardContent() {
                     {String(u.first_name)} {String(u.last_name)} —{" "}
                     {String(u.stage).replace(/_/g, " ")}
                   </Link>
+                  <LeagueBadge league={u.league} />
                   <span className="text-sm text-muted">{fmtDate(u.update_date)}</span>
                 </li>
               ))}

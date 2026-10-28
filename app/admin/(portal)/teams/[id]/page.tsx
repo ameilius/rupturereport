@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { officialImagePath } from "@/lib/leagues";
 import { getTeam } from "@/lib/admin-db";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Card, Flash, Loading, linkCls, type SP } from "@/components/admin/ui";
+import { Card, Flash, LeagueBadge, Loading, linkCls, type SP } from "@/components/admin/ui";
 
 type Props = { params: Promise<{ id: string }>; searchParams: SP };
 
@@ -28,16 +29,17 @@ async function Content({ params, searchParams }: Props) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold sm:text-3xl">
-          {String(team.name)} <span className="text-muted">({String(team.abbreviation)})</span>
+          {String(team.name)} <span className="text-muted">({String(team.abbreviation)})</span>{" "}
+          <LeagueBadge league={team.league} />
         </h1>
-        <Link href="/admin/teams" className={linkCls}>← All teams</Link>
+        <Link href={`/admin/teams?league=${team.league === "NBA" ? "NBA" : "NFL"}`} className={linkCls}>← All teams</Link>
       </div>
       <Flash searchParams={sp} />
       <Card title="Team logo">
         <ImageUpload
           kind="teams"
           id={id}
-          slug={String(team.slug)}
+          officialPath={officialImagePath("teams", String(team.slug), team.league === "NBA" ? "NBA" : "NFL", String(team.abbreviation))}
           path={(team.logo_path as string | null) ?? null}
           label={String(team.name)}
         />
