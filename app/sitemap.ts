@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { getAllPlayerSlugs } from "@/lib/players";
 import { getSeasonInfo } from "@/lib/seasons";
+import { playerPath, seasonLabel } from "@/lib/leagues";
 
 const siteUrl = "https://rupturereport.com";
 
@@ -31,7 +32,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     await connection();
-    const players = await getAllPlayerSlugs();
+    const everyone = await getAllPlayerSlugs();
+    const players = everyone.filter((p) => p.league === "NFL");
+    const nbaPlayers = everyone.filter((p) => p.league === "NBA");
     // Home + players index change whenever any player record does.
     const newest = players.reduce<string | null>(
       (m, p) => (p.lastModified && (!m || new Date(p.lastModified) > new Date(m)) ? p.lastModified : m),
@@ -49,6 +52,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const p of players) {
       entries.push({
         url: `${siteUrl}/players/${p.slug}`,
+        lastModified: p.lastModified ? new Date(p.lastModified) : undefined,
+        changeFrequency: "daily",
+        priority: 0.8,
+      });
+    }
+
+    // NBA (same sitemap): league home, players index, archive seasons, players. lastmod advances with any NBA update.
+    const newestNba = nbaPlayers.reduce<string | null>(
+      (m, p) => (p.lastModified && (!m || new Date(p.lastModified) > new Date(m)) ? p.lastModified : m),
+      null,
+    );
+    const nbaLast = newestNba ? new Date(newestNba) : undefined;
+    entries.push(
+      { url: `${siteUrl}/nba`, lastModified: nbaLast, changeFrequency: "daily", priority: 1 },
+      { url: `${siteUrl}/nba/players`, lastModified: nbaLast, changeFrequency: "daily", priority: 0.9 },
+    );
+    const nbaInfo = await getSeasonInfo("NBA");
+    for (const y of nbaInfo.withData.filter((y) => y !== nbaInfo.current)) {
+      entries.push({ url: `${siteUrl}/nba/${seasonLabel("NBA", y)}`, changeFrequency: "weekly", priority: 0.7 });
+    }
+    for (const p of nbaPlayers) {
+      entries.push({
+        url: `${siteUrl}${playerPath("NBA", p.slug)}`,
         lastModified: p.lastModified ? new Date(p.lastModified) : undefined,
         changeFrequency: "daily",
         priority: 0.8,
