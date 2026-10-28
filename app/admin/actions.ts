@@ -16,6 +16,7 @@ import {
   BODY_SIDES,
   HOME_AWAY,
   INJURY_TYPES,
+  LEAGUE_OPTIONS,
   MECHANISMS,
   PHASES,
   STAGES,
@@ -24,6 +25,8 @@ import {
   getInjury,
   getImageRow,
   getPlayer,
+  getStadiumLeague,
+  getTeamLeague,
   slugify,
   uniqueSlug,
 } from "@/lib/admin-db";
@@ -68,10 +71,15 @@ function revalidatePublic(playerSlug?: string | null) {
   revalidatePath("/[season]", "page");
   revalidatePath("/llms.txt");
   revalidatePath("/llms-full.txt");
+  revalidatePath("/nba");
+  revalidatePath("/nba/players");
+  revalidatePath("/nba/[season]", "page");
   invalidateSeasonCache();
   if (playerSlug) {
     revalidatePath(`/players/${playerSlug}`);
     revalidatePath(`/players/${playerSlug}/opengraph-image`);
+    revalidatePath(`/nba/players/${playerSlug}`);
+    revalidatePath(`/nba/players/${playerSlug}/opengraph-image`);
   }
 }
 
@@ -113,11 +121,16 @@ export async function savePlayerAction(fd: FormData) {
   const last = str(fd, "last_name", 64);
   const position = str(fd, "position", 4);
   if (!first || !last || !position) fail(back, "First name, last name and position are required");
+  const existingPlayer = id ? await getPlayer(id) : null;
+  const league = oneOf(fd, "league", LEAGUE_OPTIONS) ?? ((existingPlayer?.league as string | undefined) === "NBA" ? "NBA" : "NFL");
+  const teamId = int(fd, "team_id");
+  if (teamId != null && (await getTeamLeague(teamId)) !== league) fail(back, `That team is not an ${league} team`);
   const fields = {
     first_name: first,
     last_name: last,
+    league,
     position,
-    team_id: int(fd, "team_id"),
+    team_id: teamId,
     dob: date(fd, "dob"),
     height_in: int(fd, "height_in"),
     weight_lb: int(fd, "weight_lb"),
@@ -154,6 +167,7 @@ export async function saveStadiumAction(fd: FormData) {
   const surfaceType = oneOf(fd, "surface_type", SURFACE_TYPES);
   if (!name || !city || !surfaceType) fail(back, "Name, city and surface type are required");
   const fields = {
+    league: oneOf(fd, "league", LEAGUE_OPTIONS) ?? "NFL",
     name,
     city,
     state: str(fd, "state", 2)?.toUpperCase() ?? null,
@@ -188,15 +202,20 @@ export async function saveInjuryAction(fd: FormData) {
   const injuryType = oneOf(fd, "injury_type", INJURY_TYPES);
   const injuryDate = date(fd, "injury_date");
   if (!injuryType || !injuryDate) fail(back, "Injury type and date are required");
+  const stadiumId = int(fd, "stadium_id");
+  const opponentId = int(fd, "opponent_id");
+  const pl = player.league as string;
+  if (stadiumId != null && (await getStadiumLeague(stadiumId)) !== pl) fail(back, `That ${pl === "NBA" ? "arena" : "stadium"} is not in the ${pl}`);
+  if (opponentId != null && (await getTeamLeague(opponentId)) !== pl) fail(back, `That opponent is not an ${pl} team`);
   const fields = {
     player_id: playerId,
     injury_type: injuryType,
     injury_date: injuryDate,
-    season: parseSeason(str(fd, "season")) ?? (await getCurrentSeason()),
+    season: parseSeason(str(fd, "season")) ?? (await getCurrentSeason(player.league === "NBA" ? "NBA" : "NFL")),
     week: int(fd, "week"),
-    stadium_id: int(fd, "stadium_id"),
+    stadium_id: stadiumId,
     home_away: oneOf(fd, "home_away", HOME_AWAY),
-    opponent_id: int(fd, "opponent_id"),
+    opponent_id: opponentId,
     mechanism: oneOf(fd, "mechanism", MECHANISMS),
     body_side: oneOf(fd, "body_side", BODY_SIDES),
     phase: oneOf(fd, "phase", PHASES),
@@ -323,6 +342,16 @@ export async function saveSettingsAction(fd: FormData) {
     "INSERT INTO settings (k, v) VALUES ('current_season', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)",
     [String(season)],
   );
+  // NBA season = the year it starts (2026 = 2026-27). Optional: leave blank to keep the current value.
+  const nbaRaw = str(fd, "current_season_nba");
+  if (nbaRaw != null) {
+    const nba = parseSeason(nbaRaw);
+    if (nba == null) fail("/admin/settings", "NBA season must be a 4-digit start year (2026 = 2026-27)");
+    await exec(
+      "INSERT INTO settings (k, v) VALUES ('current_season_nba', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)",
+      [String(nba)],
+    );
+  }
   revalidatePublic();
   redirect("/admin/settings?saved=1");
 }

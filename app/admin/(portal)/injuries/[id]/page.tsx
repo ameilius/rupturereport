@@ -27,10 +27,10 @@ async function Content({ params, searchParams }: Props) {
   await requireAdmin();
   const id = Number((await params).id);
   if (!Number.isInteger(id)) notFound();
-  const [injury, updates, teams, stadiums, sp] = await Promise.all([
-    getInjury(id), getUpdates(id), listTeams(), listStadiums(), searchParams,
-  ]);
+  const [injury, updates, sp] = await Promise.all([getInjury(id), getUpdates(id), searchParams]);
   if (!injury) notFound();
+  const league = injury.player_league === "NBA" ? "NBA" : "NFL";
+  const [teams, stadiums] = await Promise.all([listTeams(league), listStadiums(league)]);
   const today = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-6">
@@ -42,6 +42,7 @@ async function Content({ params, searchParams }: Props) {
               team={(injury.team_abbr as string | null) ?? null}
               headshotPath={(injury.headshot_path as string | null) ?? null}
               size={56}
+              league={league}
             />
           </Link>
           <div>

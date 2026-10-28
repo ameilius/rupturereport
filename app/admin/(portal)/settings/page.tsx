@@ -19,6 +19,7 @@ async function Content({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   invalidateSeasonCache();
   const info = await getSeasonInfo();
+  const nba = await getSeasonInfo("NBA");
   return (
     <>
       <PageTitle>Settings</PageTitle>
@@ -31,6 +32,13 @@ async function Content({ searchParams }: { searchParams: SP }) {
             hint={`The home page (/) shows this season, /${info.current} redirects to /, and new injuries default to it. Seasons with data: ${info.withData.join(", ") || "none"}.`}
           >
             <Input name="current_season" type="number" min={1920} max={2200} required defaultValue={String(info.current)} />
+          </Field>
+          <Field
+            label="Current NBA season (start year)"
+            name="current_season_nba"
+            hint={`/nba shows this season (2026 = 2026-27), /nba/${nba.current}-${String((nba.current + 1) % 100).padStart(2, "0")} redirects to /nba, and new NBA injuries default to it. Seasons with data: ${nba.withData.join(", ") || "none"}.`}
+          >
+            <Input name="current_season_nba" type="number" min={1946} max={2200} required defaultValue={String(nba.current)} />
           </Field>
           <button className={btnCls}>Save settings</button>
         </form>

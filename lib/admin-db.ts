@@ -5,13 +5,17 @@ export const POSITIONS = [
   "QB", "RB", "FB", "WR", "TE", "OT", "OG", "C", "OL",
   "DE", "DT", "NT", "DL", "EDGE", "OLB", "ILB", "LB", "CB", "S", "DB",
   "K", "P", "LS",
+  // NBA: store the listed position (grouped into Guards / Wings-forwards / Bigs on the site)
+  "PG", "SG", "SF", "PF", "G", "F", "G-F", "F-G", "F-C", "C-F",
 ] as const;
+export const LEAGUE_OPTIONS = ["NFL", "NBA"] as const;
+export type LeagueId = (typeof LEAGUE_OPTIONS)[number];
 export const INJURY_TYPES = ["ACL", "Achilles", "MCL", "other"] as const;
 export const HOME_AWAY = ["home", "away", "neutral"] as const;
 export const MECHANISMS = ["non_contact", "contact", "other"] as const;
 export const BODY_SIDES = ["left", "right", "bilateral", "unknown"] as const;
-export const PHASES = ["preseason", "regular", "playoffs"] as const;
-export const SURFACE_TYPES = ["natural", "hybrid", "artificial"] as const;
+export const PHASES = ["preseason", "regular", "playoffs", "summer_league"] as const;
+export const SURFACE_TYPES = ["natural", "hybrid", "artificial", "hardwood"] as const;
 export const STAGES = [
   "diagnosis", "surgery", "immobilization", "non_weight_bearing",
   "weight_bearing", "jogging", "cutting", "practice_limited",
@@ -81,18 +85,25 @@ export const recentUpdates = (limit = 10) =>
     [limit],
   );
 
-export const listTeams = () =>
-  q<Row>(`SELECT id, abbreviation, name FROM teams ORDER BY name`);
+/** Teams (optionally one league). Abbreviations are only unique per league, so always carry `league`. */
+export const listTeams = (league?: string | null) =>
+  q<Row>(`SELECT id, league, abbreviation, name FROM teams WHERE (? IS NULL OR league = ?) ORDER BY league, name`, [league ?? null, league ?? null]);
 
-export const listStadiums = () =>
-  q<Row>(`SELECT * FROM stadiums ORDER BY name`);
+export const listStadiums = (league?: string | null) =>
+  q<Row>(`SELECT * FROM stadiums WHERE (? IS NULL OR league = ?) ORDER BY league, name`, [league ?? null, league ?? null]);
+
+export const getTeamLeague = async (id: number): Promise<string | null> =>
+  ((await q<Row>(`SELECT league FROM teams WHERE id = ?`, [id]))[0]?.league as string | undefined) ?? null;
+
+export const getStadiumLeague = async (id: number): Promise<string | null> =>
+  ((await q<Row>(`SELECT league FROM stadiums WHERE id = ?`, [id]))[0]?.league as string | undefined) ?? null;
 
 export const getStadium = async (id: number) =>
   (await q<Row>(`SELECT * FROM stadiums WHERE id = ?`, [id]))[0] ?? null;
 
 export const searchPlayers = (term: string) =>
   q<Row>(
-    `SELECT p.id, p.first_name, p.last_name, p.slug, p.position, p.headshot_path, t.abbreviation team,
+    `SELECT p.id, p.league, p.first_name, p.last_name, p.slug, p.position, p.headshot_path, t.abbreviation team,
             (SELECT COUNT(*) FROM injuries i WHERE i.player_id = p.id) injury_count
        FROM players p LEFT JOIN teams t ON t.id = p.team_id
       WHERE ? = '' OR CONCAT(p.first_name, ' ', p.last_name) LIKE ? OR p.slug LIKE ?
@@ -116,7 +127,7 @@ export const getPlayerInjuries = (playerId: number) =>
 export const getInjury = async (id: number) =>
   (
     await q<Row>(
-      `SELECT i.*, p.first_name, p.last_name, p.slug player_slug, p.headshot_path, t.abbreviation team_abbr
+      `SELECT i.*, p.first_name, p.last_name, p.slug player_slug, p.league player_league, p.headshot_path, t.abbreviation team_abbr
          FROM injuries i JOIN players p ON p.id = i.player_id
          LEFT JOIN teams t ON t.id = p.team_id WHERE i.id = ?`,
       [id],

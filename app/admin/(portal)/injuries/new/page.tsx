@@ -22,8 +22,11 @@ async function Content({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   const playerId = Number(sp.player);
   if (!Number.isInteger(playerId)) notFound();
-  const [player, teams, stadiums, season] = await Promise.all([getPlayer(playerId), listTeams(), listStadiums(), getCurrentSeason()]);
+  const player = await getPlayer(playerId);
   if (!player) notFound();
+  const league = player.league === "NBA" ? "NBA" : "NFL";
+  // Only this player's league: teams, stadiums/arenas and the default season.
+  const [teams, stadiums, season] = await Promise.all([listTeams(league), listStadiums(league), getCurrentSeason(league)]);
   const allTypes = sp.all === "1";
   return (
     <>

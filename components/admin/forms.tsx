@@ -4,6 +4,7 @@ import {
   BODY_SIDES,
   HOME_AWAY,
   INJURY_TYPES,
+  LEAGUE_OPTIONS,
   MECHANISMS,
   PHASES,
   POSITIONS,
@@ -31,7 +32,10 @@ export function PlayerForm({ player, teams }: { player?: Row | null; teams: Row[
             <Input name="slug" defaultValue={v("slug")} />
           </Field>
         )}
-        <Field label="Position *" name="position">
+        <Field label="League *" name="league" hint="The team must belong to the same league.">
+          <Select name="league" options={LEAGUE_OPTIONS} defaultValue={v("league") ?? "NFL"} required />
+        </Field>
+        <Field label="Position *" name="position" hint="NBA: the listed position (G, F, C, G-F …).">
           <Select name="position" options={POSITIONS} defaultValue={v("position")} empty="—" required />
         </Field>
         <Field label="Team" name="team_id">
@@ -39,7 +43,7 @@ export function PlayerForm({ player, teams }: { player?: Row | null; teams: Row[
             name="team_id"
             empty="— None / free agent —"
             defaultValue={v("team_id")}
-            options={teams.map((t) => ({ value: Number(t.id), label: `${t.name} (${t.abbreviation})` }))}
+            options={teams.map((t) => ({ value: Number(t.id), label: `${t.league} · ${t.name} (${t.abbreviation})` }))}
           />
         </Field>
         <Field label="Date of birth" name="dob">
@@ -66,7 +70,10 @@ export function StadiumForm({ stadium }: { stadium?: Row | null }) {
     <form action={saveStadiumAction} className="space-y-4">
       {stadium && <input type="hidden" name="id" value={String(stadium.id)} />}
       <div className={grid}>
-        <Field label="Name *" name="name">
+        <Field label="League *" name="league">
+          <Select name="league" options={LEAGUE_OPTIONS} defaultValue={v("league") ?? "NFL"} required />
+        </Field>
+        <Field label="Name *" name="name" hint="Stadium or arena name.">
           <Input name="name" required maxLength={128} defaultValue={v("name")} />
         </Field>
         <Field label="Slug" name="slug" hint="Leave blank to generate from name.">
@@ -129,16 +136,16 @@ export function InjuryForm({
         <Field label="Injury date *" name="injury_date">
           <Input name="injury_date" type="date" required defaultValue={injury ? fmtDate(injury.injury_date) : undefined} />
         </Field>
-        <Field label="Season" name="season">
+        <Field label="Season" name="season" hint="League year: NFL 2026 = 2026 season; NBA 2026 = 2026-27.">
           <Input name="season" type="number" min={2000} max={2100} defaultValue={v("season") ?? (defaultSeason != null ? String(defaultSeason) : undefined)} required />
         </Field>
-        <Field label="Week" name="week">
+        <Field label="Week / game #" name="week" hint="NFL week; NBA game number.">
           <Input name="week" type="number" min={0} max={23} defaultValue={v("week")} />
         </Field>
         <Field label="Phase" name="phase">
           <Select name="phase" options={PHASES} defaultValue={v("phase") ?? "regular"} empty="—" />
         </Field>
-        <Field label="Stadium" name="stadium_id">
+        <Field label="Stadium / arena" name="stadium_id">
           <Select
             name="stadium_id"
             empty="—"

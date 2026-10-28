@@ -53,6 +53,7 @@ async function Content({ searchParams }: { searchParams: SP }) {
                       <PlayerAvatar
                         name={`${String(p.first_name)} ${String(p.last_name)}`}
                         team={(p.team as string | null) ?? null}
+                        league={p.league === "NBA" ? "NBA" : "NFL"}
                         headshotPath={(p.headshot_path as string | null) ?? null}
                         size={32}
                       />
@@ -60,7 +61,7 @@ async function Content({ searchParams }: { searchParams: SP }) {
                     </Link>
                   </td>
                   <td className="p-3">{String(p.position ?? "")}</td>
-                  <td className="p-3">{String(p.team ?? "")}</td>
+                  <td className="p-3">{p.team ? `${p.league === "NBA" ? "NBA · " : ""}${String(p.team)}` : ""}</td>
                   <td className="p-3">{String(p.injury_count)}</td>
                   <td className="p-3 text-right">
                     <Link href={`/admin/players/${p.id}`} className={`${linkCls} whitespace-nowrap`}>
