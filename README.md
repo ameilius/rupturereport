@@ -13,3 +13,10 @@ NFL ACL &amp; Achilles injury progress tracker — rupturereport.com
 - **Tear** is the counted event ("17 ACL tears", "torn ACL"). "Injury" is used only for generic data records (admin forms, schema/MedicalCondition) and never in counts.
 - **Achilles** (not "Achilles tendon") in copy; "Achilles tendon" appears only in medical schema names.
 - Brand and site title are season-neutral ("NFL ACL & Achilles Tear Tracker"); a season appears only on season-scoped pages, stats and FAQ ("in the 2026 NFL season").
+
+## Leagues (NFL + NBA)
+
+- `teams.league`, `players.league` and `stadiums.league` ('NFL' | 'NBA'). Team/stadium abbreviations are only unique **per league** (`UNIQUE (league, abbreviation)`), so every migration or query that looks a team up by abbreviation must filter by league (e.g. `WHERE league = 'NFL' AND abbreviation = 'LAC'`; NFL/NBA share codes like LAC, LAL-style collisions, ATL, DAL, DEN, DET, MIA, MIN, NO, NY, PHI, PHX, SEA…).
+- Seasons are per league: `settings.current_season` (NFL) and `settings.current_season_nba` (NBA league year, 2026 = 2026-27). `injuries.season` is the league year.
+- NFL lives at `/`, `/{season}`, `/players/...`; NBA at `/nba`, `/nba/{YYYY-YY}`, `/nba/players/...`. Slugs are unique across leagues.
+- NBA share cards are route handlers at `/nba/opengraph-image` and `/nba/players/{slug}/opengraph-image`.
