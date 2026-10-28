@@ -16,7 +16,7 @@ NFL ACL &amp; Achilles injury progress tracker — rupturereport.com
 
 ## Leagues (NFL + NBA)
 
-- `teams.league`, `players.league` and `stadiums.league` ('NFL' | 'NBA'). Team/stadium abbreviations are only unique **per league** (`UNIQUE (league, abbreviation)`), so every migration or query that looks a team up by abbreviation must filter by league (e.g. `WHERE league = 'NFL' AND abbreviation = 'LAC'`; NFL/NBA share codes like LAC, LAL-style collisions, ATL, DAL, DEN, DET, MIA, MIN, NO, NY, PHI, PHX, SEA…).
+- `teams.league`, `players.league` and `stadiums.league` ('NFL' | 'NBA'). Team/stadium abbreviations are only unique **per league** (`UNIQUE (league, abbreviation)`), so every migration or query that looks a team up by abbreviation must filter by league (e.g. `WHERE league = 'NFL' AND abbreviation = 'LAC'`; some NFL and NBA codes collide, e.g. ATL, DAL, DEN, DET, MIA, MIN).
 - Seasons are per league: `settings.current_season` (NFL) and `settings.current_season_nba` (NBA league year, 2026 = 2026-27). `injuries.season` is the league year.
 - NFL lives at `/`, `/{season}`, `/players/...`; NBA at `/nba`, `/nba/{YYYY-YY}`, `/nba/players/...`. Slugs are unique across leagues.
 - NBA share cards are route handlers at `/nba/opengraph-image` and `/nba/players/{slug}/opengraph-image`.
