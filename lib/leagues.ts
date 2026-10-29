@@ -22,6 +22,8 @@ export interface LeagueConfig {
   settingKey: string;
   /** Plural noun for the people ("players" in both, kept for copy variation). */
   teamNoun: string;
+  /** Where a returned player is back ("field" vs "court"). */
+  returnPlace: "field" | "court";
 }
 
 export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
@@ -36,6 +38,7 @@ export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
     hasSurface: true,
     settingKey: "current_season",
     teamNoun: "team",
+    returnPlace: "field",
   },
   NBA: {
     id: "NBA",
@@ -48,6 +51,7 @@ export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
     hasSurface: false,
     settingKey: "current_season_nba",
     teamNoun: "team",
+    returnPlace: "court",
   },
 };
 

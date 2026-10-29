@@ -3,7 +3,7 @@ import { injurySentence, trackerFaq, trackerRowFacts } from "@/lib/summaries";
 import { DATA_LICENSE_URL, SITE_NAME, SITE_URL, TERMS_URL } from "@/lib/structured-data";
 import { computeStats, getCarryover, getTrackerRows } from "@/lib/tracker";
 import { getSeasonInfo } from "@/lib/seasons";
-import { playerPath, seasonLabel, type League } from "@/lib/leagues";
+import { LEAGUE_CONFIG, playerPath, seasonLabel, type League } from "@/lib/leagues";
 
 interface LeagueData {
   league: League;
@@ -39,7 +39,7 @@ function totalsLine(d: LeagueData): string {
         : "") +
     (s.mechanismKnown ? ` ${s.nonContactPct}% of tears with a known mechanism were non-contact.` : "") +
     (carry.stillRecovering.length ? ` ${carry.stillRecovering.length} tear${carry.stillRecovering.length === 1 ? "" : "s"} from earlier seasons ${carry.stillRecovering.length === 1 ? "is" : "are"} still in recovery (not counted in ${label} totals).` : "") +
-    (carry.prevPlayers ? ` ${carry.prevReturnedPlayers} of ${carry.prevPlayers} players from the ${seasonLabel(league, carry.prevSeason)} season are back on the field.` : "")
+    (carry.prevPlayers ? ` ${carry.prevReturnedPlayers} of ${carry.prevPlayers} players from the ${seasonLabel(league, carry.prevSeason)} season are back on the ${LEAGUE_CONFIG[league].returnPlace}.` : "")
   );
 }
 

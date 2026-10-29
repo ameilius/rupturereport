@@ -11,7 +11,7 @@ import { trackerFaq } from "@/lib/summaries";
 import { computeStats, getCarryover, getTrackerRows, weeklySeries, type TrackerRow } from "@/lib/tracker";
 import { LEAGUE, type SeasonInfo } from "@/lib/seasons";
 import { seasonCopy } from "@/lib/season-meta";
-import { homePath, playersPath, seasonLabel, type League } from "@/lib/leagues";
+import { LEAGUE_CONFIG, homePath, playersPath, seasonLabel, type League } from "@/lib/leagues";
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
@@ -175,7 +175,7 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
         Rupture Report tracks {s.total} torn ACL and Achilles tear{s.total === 1 ? "" : "s"} in the {label} {league} season:{" "}
         {s.acl} ACL and {s.achilles} Achilles across {teams} team{teams === 1 ? "" : "s"}.
         {carry.prevPlayers > 0 && (
-          <> {carry.prevReturnedPlayers} of {carry.prevPlayers} players from the {seasonLabel(league, carry.prevSeason)} season are back on the field.</>
+          <> {carry.prevReturnedPlayers} of {carry.prevPlayers} players from the {seasonLabel(league, carry.prevSeason)} season are back on the {LEAGUE_CONFIG[league].returnPlace}.</>
         )}
         {lastModified && (
           <> Last updated <time dateTime={lastModified}>{formatDate(lastModified)}</time>.</>
@@ -196,7 +196,7 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
             {carry.prevPlayers > 0 && (
               <p className="glass rounded-xl border px-4 py-2 text-sm" data-carryover-stat>
                 <span className="text-xl font-bold tabular-nums text-teal">{carry.prevReturnedPlayers}</span>{" "}
-                <span className="text-muted">of {carry.prevPlayers} {seasonLabel(league, carry.prevSeason)} players back on the field</span>
+                <span className="text-muted">of {carry.prevPlayers} {seasonLabel(league, carry.prevSeason)} players back on the {LEAGUE_CONFIG[league].returnPlace}</span>
               </p>
             )}
           </div>

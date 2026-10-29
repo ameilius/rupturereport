@@ -13,10 +13,13 @@ const SINGLE_SEGMENT = /^\/([^/.]+)\/?$/;
 // Real top-level pages; anything else with one segment is a season (/2025) or a 404.
 const TOP_LEVEL = new Set(["players", "terms", "contact", "admin", "nba"]);
 
-function notFoundRewrite(req: NextRequest) {
+function notFoundRewrite(req: NextRequest, league: "NFL" | "NBA" = "NFL") {
   const url = req.nextUrl.clone();
   url.pathname = "/_not-found";
-  return NextResponse.rewrite(url);
+  // Lets the shared 404 view pick league-appropriate copy and links.
+  const headers = new Headers(req.headers);
+  headers.set("x-rr-league", league);
+  return NextResponse.rewrite(url, { request: { headers } });
 }
 
 export async function proxy(req: NextRequest) {
@@ -49,7 +52,7 @@ export async function proxy(req: NextRequest) {
   if (nbaOne && (nbaOne[1] === "players" || nbaOne[1].startsWith("opengraph-image"))) return NextResponse.next();
   if (nbaOne) {
     const season = parseSeasonSegment("NBA", nbaOne[1]);
-    if (season == null) return notFoundRewrite(req);
+    if (season == null) return notFoundRewrite(req, "NBA");
     try {
       const info = await getSeasonInfo("NBA");
       if (season === info.current) {
@@ -57,7 +60,7 @@ export async function proxy(req: NextRequest) {
         url.pathname = "/nba";
         return NextResponse.redirect(url, 308);
       }
-      if (!info.withData.includes(season)) return notFoundRewrite(req);
+      if (!info.withData.includes(season)) return notFoundRewrite(req, "NBA");
     } catch {
       // DB unavailable: let the page render its own fallback.
     }
@@ -70,7 +73,7 @@ export async function proxy(req: NextRequest) {
     try {
       slug = decodeURIComponent(slug);
     } catch {}
-    if ((await playerSlugExists(slug, "NBA")) === false) return notFoundRewrite(req);
+    if ((await playerSlugExists(slug, "NBA")) === false) return notFoundRewrite(req, "NBA");
     return NextResponse.next();
   }
 
