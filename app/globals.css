@@ -148,3 +148,28 @@ body {
   .rr-sw { order: 3; width: 100%; margin: 0; }
   .rr-sw a { flex: 1; padding: 6px 14px; }
 }
+
+/* ---- Stats pages (/stats, /nba/stats) ---- */
+.st-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.st-card{background:#121821;border:1px solid #1F2933;border-radius:14px;padding:18px 18px 16px;min-width:0}
+.st-c12{grid-column:span 12}.st-c6{grid-column:span 6}
+@media(max-width:900px){.st-c6{grid-column:span 12}}
+.st-h2{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8B98A5;margin:0}
+.st-sub{font-size:12px;color:#8B98A5}
+.st-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media(max-width:900px){.st-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.st-kpi{background:#121821;border:1px solid #1F2933;border-radius:14px;padding:14px 16px}
+.st-kpi dt{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8B98A5}
+.st-kpi dd{margin:4px 0 0;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.st-x{font-size:12px;color:#8B98A5;font-weight:500}
+.st-row{display:grid;grid-template-columns:minmax(0,130px) 1fr 58px;align-items:center;gap:10px;min-height:30px;font-size:13px}
+.st-bar{height:12px;border-radius:4px;background:#1a222c;display:flex;overflow:hidden}.st-bar i{display:block;height:100%}
+.st-leg{display:flex;gap:14px;font-size:12px;color:#8B98A5;flex-wrap:wrap}.st-leg b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.st-tbl{width:100%;border-collapse:collapse;font-size:13px}.st-tbl td,.st-tbl th{padding:7px 6px;border-bottom:1px solid #1F2933;text-align:left}.st-tbl th{font-size:11px;color:#8B98A5;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.st-num{text-align:right!important;font-variant-numeric:tabular-nums}
+.st-ghost{border:1px dashed #33414f;background:repeating-linear-gradient(135deg,#10161e 0 12px,#131a23 12px 24px);color:#5d6b78;text-align:center;padding:34px 18px;border-radius:14px}
+.st-na{border:1px dashed #33414f;border-radius:10px;padding:10px 12px;font-size:12px;color:#8B98A5;margin-top:12px}
+.st-tabs{display:flex;gap:8px;margin:14px 0 18px;flex-wrap:wrap}.st-tabs span{font-size:12px;padding:5px 12px;border-radius:999px;border:1px solid #1F2933;color:#8B98A5}.st-tabs span.on{color:#14B8A6;border-color:rgb(20 184 166/.45);background:rgb(20 184 166/.12)}
+.st-fact{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1F2933;font-size:13px}.st-fact:last-child{border:0}.st-fact .k{min-width:120px;color:#8B98A5;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding-top:2px}
+@media(max-width:600px){.st-fact{flex-direction:column;gap:4px}}
+a.st-pl{color:#E6EDF3;text-decoration:none;border-bottom:1px dotted #33414f}a.st-pl:hover{color:#14B8A6}

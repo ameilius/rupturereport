@@ -12,3 +12,11 @@ export const nbaOgImage = {
   height: 630,
   alt: "Rupture Report — NBA ACL & Achilles Tear Tracker",
 };
+
+/** Stats pages: one stable card per league (route handlers under /stats and /nba/stats). */
+export const statsOgImage = (league: "NFL" | "NBA") => ({
+  url: league === "NBA" ? "/nba/stats/opengraph-image" : "/stats/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: `Rupture Report — ${league} ACL & Achilles Tear Stats`,
+});

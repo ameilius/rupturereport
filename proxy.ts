@@ -11,7 +11,7 @@ const NBA_PLAYER_PAGE = /^\/nba\/players\/([^/]+)\/?$/;
 
 const SINGLE_SEGMENT = /^\/([^/.]+)\/?$/;
 // Real top-level pages; anything else with one segment is a season (/2025) or a 404.
-const TOP_LEVEL = new Set(["players", "terms", "contact", "admin", "nba"]);
+const TOP_LEVEL = new Set(["players", "stats", "terms", "contact", "admin", "nba"]);
 
 function notFoundRewrite(req: NextRequest, league: "NFL" | "NBA" = "NFL") {
   const url = req.nextUrl.clone();
@@ -49,7 +49,7 @@ export async function proxy(req: NextRequest) {
   // NBA season hubs: /nba/{2025-26}. Same rules as the NFL: current season 308s to "/nba", past seasons with data
   // render, everything else is a real 404. "/nba/players" is a real page.
   const nbaOne = NBA_SEGMENT.exec(pathname);
-  if (nbaOne && (nbaOne[1] === "players" || nbaOne[1].startsWith("opengraph-image"))) return NextResponse.next();
+  if (nbaOne && (nbaOne[1] === "players" || nbaOne[1] === "stats" || nbaOne[1].startsWith("opengraph-image"))) return NextResponse.next();
   if (nbaOne) {
     const season = parseSeasonSegment("NBA", nbaOne[1]);
     if (season == null) return notFoundRewrite(req, "NBA");

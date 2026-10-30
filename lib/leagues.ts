@@ -24,6 +24,14 @@ export interface LeagueConfig {
   teamNoun: string;
   /** Where a returned player is back ("field" vs "court"). */
   returnPlace: "field" | "court";
+  /** Stats page: how positions are grouped (matched on the first listed position, e.g. "G-F" → "G"). */
+  positionGroups: { label: string; positions: string[] }[];
+  /** Stats page: time-series bucket. Sparse leagues read better by month. */
+  seriesGranularity: "week" | "month";
+  /** Teams in the league (for "X of N teams" copy). */
+  teamCount: number;
+  /** Stats page copy: what counts as a game / non-game for this league. */
+  gameScope: string;
 }
 
 export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
@@ -39,6 +47,17 @@ export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
     settingKey: "current_season",
     teamNoun: "team",
     returnPlace: "field",
+    positionGroups: [
+      { label: "Offense skill (QB/RB/WR/TE)", positions: ["QB", "RB", "WR", "TE", "FB"] },
+      { label: "Offensive line", positions: ["OT", "T", "G", "OG", "C", "OL"] },
+      { label: "Defensive line (DE/DT)", positions: ["DE", "DT", "NT", "DL", "EDGE"] },
+      { label: "Linebackers", positions: ["LB", "ILB", "OLB", "MLB"] },
+      { label: "Secondary (CB/S)", positions: ["CB", "S", "FS", "SS", "DB"] },
+      { label: "Specialists", positions: ["K", "P", "LS"] },
+    ],
+    seriesGranularity: "week",
+    teamCount: 32,
+    gameScope: "Games include preseason and regular season; practice covers OTAs, minicamp and camp.",
   },
   NBA: {
     id: "NBA",
@@ -52,6 +71,14 @@ export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
     settingKey: "current_season_nba",
     teamNoun: "team",
     returnPlace: "court",
+    positionGroups: [
+      { label: "Guards", positions: ["G", "PG", "SG"] },
+      { label: "Wings / forwards", positions: ["F", "SF", "PF", "GF"] },
+      { label: "Bigs", positions: ["C", "FC"] },
+    ],
+    seriesGranularity: "month",
+    teamCount: 30,
+    gameScope: "Games include Summer League, preseason, regular season and playoffs.",
   },
 };
 
@@ -87,6 +114,7 @@ export function parseSeasonSegment(league: League, v: unknown): number | null {
 }
 
 export const homePath = (l: League) => cfg(l).basePath || "/";
+export const statsPath = (l: League) => `${cfg(l).basePath}/stats`;
 export const playersPath = (l: League) => `${cfg(l).basePath}/players`;
 export const playerPath = (l: League, slug: string) => `${cfg(l).basePath}/players/${slug}`;
 /** The current season lives at the league home; archive seasons at "{base}/{segment}". */
@@ -112,6 +140,6 @@ export function positionBucket(pos: string | null | undefined): PositionBucket |
 export function leagueFromPathname(pathname: string | null | undefined): League | null {
   const p = pathname ?? "/";
   if (p === "/nba" || p.startsWith("/nba/")) return "NBA";
-  if (p === "/" || p === "/players" || p.startsWith("/players/") || /^\/\d{4}\/?$/.test(p)) return "NFL";
+  if (p === "/" || p === "/stats" || p === "/players" || p.startsWith("/players/") || /^\/\d{4}\/?$/.test(p)) return "NFL";
   return null;
 }

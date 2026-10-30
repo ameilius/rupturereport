@@ -30,7 +30,7 @@ export function SiteHeader() {
           <LeagueSwitcher />
         </Suspense>
         <nav aria-label="Main" className="flex items-center gap-5 text-sm">
-          <Suspense fallback={<><Link href="/" className="text-muted hover:text-text">Tracker</Link><Link href="/players" className="text-muted hover:text-text">Players</Link></>}>
+          <Suspense fallback={<><Link href="/" className="text-muted hover:text-text">Tracker</Link><Link href="/players" className="text-muted hover:text-text">Players</Link><Link href="/stats" className="text-muted hover:text-text">Stats</Link></>}>
             <MainNavLinks />
           </Suspense>
           <Link href="/contact" className="text-muted hover:text-text">Contact</Link>

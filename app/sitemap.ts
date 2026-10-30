@@ -19,6 +19,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${siteUrl}/stats`,
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
       url: `${siteUrl}/terms`,
       changeFrequency: "yearly",
       priority: 0.2,
@@ -43,6 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (newest) {
       entries[0].lastModified = new Date(newest);
       entries[1].lastModified = new Date(newest);
+      entries[2].lastModified = new Date(newest);
     }
     // Archive season hubs (the current season is "/", so it is not listed twice).
     const info = await getSeasonInfo();
@@ -67,6 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push(
       { url: `${siteUrl}/nba`, lastModified: nbaLast, changeFrequency: "daily", priority: 1 },
       { url: `${siteUrl}/nba/players`, lastModified: nbaLast, changeFrequency: "daily", priority: 0.9 },
+      { url: `${siteUrl}/nba/stats`, lastModified: nbaLast, changeFrequency: "daily", priority: 0.8 },
     );
     const nbaInfo = await getSeasonInfo("NBA");
     for (const y of nbaInfo.withData.filter((y) => y !== nbaInfo.current)) {

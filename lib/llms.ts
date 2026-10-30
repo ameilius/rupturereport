@@ -74,12 +74,14 @@ export async function buildLlmsTxt(full: boolean): Promise<string> {
     L.push(`- [NFL ${y} season archive](${SITE_URL}/${y}): every tracked ${y} tear with stats and FAQ`);
   }
   L.push(`- [All NFL players](${SITE_URL}/players): index of every tracked NFL player`);
+  L.push(`- [NFL tear stats, ${nfl.label} season](${SITE_URL}/stats): charts and breakdowns (tears per week, games vs practice, turf vs grass, mechanism, positions, teams, recovery stage, days to surgery)`);
   L.push(`- [NBA tear tracker, ${nba.label} season](${SITE_URL}/nba): current season table, summary stats, tears by position and FAQ`);
   for (const y of nba.info.withData.filter((y) => y !== nba.info.current)) {
     const l = seasonLabel("NBA", y);
     L.push(`- [NBA ${l} season archive](${SITE_URL}/nba/${l}): every tracked ${l} tear with stats and FAQ`);
   }
   L.push(`- [All NBA players](${SITE_URL}/nba/players): index of every tracked NBA player`);
+  L.push(`- [NBA tear stats, ${nba.label} season](${SITE_URL}/nba/stats): charts and breakdowns (tears per month, games vs practice, mechanism, positions, teams, recovery stage, days to surgery)`);
   L.push(`- [Terms & data license](${TERMS_URL})`);
   L.push(`- [Contact](${SITE_URL}/contact): corrections and data requests (contact@rupturereport.com)`);
   L.push(`- [Sitemap](${SITE_URL}/sitemap.xml)`);
