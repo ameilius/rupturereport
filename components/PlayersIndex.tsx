@@ -26,7 +26,7 @@ export default function PlayersIndex({ league = "NFL", description }: { league?:
         }}
       />
       <header className="hero relative isolate pb-2">
-        <div aria-hidden="true" className="hero-bg pointer-events-none absolute -inset-x-6 -top-10 -z-10 h-[160%]" />
+        <div aria-hidden="true" className={`hero-bg${league === "NBA" ? " hero-bg--nba" : ""} pointer-events-none absolute -inset-x-6 -top-10 -z-10 h-[160%]`} />
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest">
           <span aria-hidden="true" className="live-dot live-dot--static" />
           <Link href={homePath(league)} className="text-teal hover:text-text">{nba ? "NBA" : "Home"}</Link>

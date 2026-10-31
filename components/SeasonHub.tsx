@@ -60,7 +60,7 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
   const grad = "bg-gradient-to-r from-teal to-rupture bg-clip-text text-transparent";
   const renderHeader = (extra?: { updated: string | null }) => (
     <header className="hero relative isolate pb-2">
-      <div aria-hidden="true" className="hero-bg pointer-events-none absolute -inset-x-6 -top-10 -z-10 h-[150%]" />
+      <div aria-hidden="true" className={`hero-bg${league === "NBA" ? " hero-bg--nba" : ""} pointer-events-none absolute -inset-x-6 -top-10 -z-10 h-[150%]`} />
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
           <span className="flex items-center gap-2">

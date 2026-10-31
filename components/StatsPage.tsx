@@ -158,7 +158,7 @@ export default async function StatsPage({ league }: { league: League }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={ld({ "@context": "https://schema.org", ...dataset })} />
       <script type="application/ld+json" dangerouslySetInnerHTML={ld(crumbs)} />
       <header className="hero relative isolate pb-2">
-        <div aria-hidden="true" className="hero-bg pointer-events-none absolute -inset-x-6 -top-10 -z-10 h-[150%]" />
+        <div aria-hidden="true" className={`hero-bg${league === "NBA" ? " hero-bg--nba" : ""} pointer-events-none absolute -inset-x-6 -top-10 -z-10 h-[150%]`} />
         <p className="text-xs font-semibold uppercase tracking-wider text-teal">{s.label} {league} season · Stats</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">{league} tear stats</h1>
         <p className="mt-3 max-w-3xl text-muted">

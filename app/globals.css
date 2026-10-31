@@ -97,6 +97,19 @@ main { overflow-x: clip; }
   -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent);
   mask-image: linear-gradient(to bottom, #000 30%, transparent);
 }
+/* NBA hero: dark hardwood court (faint plank seams + court lines) instead of the NFL yard lines. Same darkness. */
+.hero-bg--nba {
+  background:
+    radial-gradient(ellipse 60% 55% at 22% 38%, rgb(20 184 166 / 0.12), transparent 70%),
+    radial-gradient(ellipse 45% 45% at 60% 30%, rgb(245 158 11 / 0.06), transparent 70%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1400' height='700' viewBox='0 0 1400 700' fill='none' stroke='%23E6EDF3' stroke-opacity='0.1' stroke-width='2'><line x1='700' y1='0' x2='700' y2='700'/><circle cx='700' cy='350' r='90'/><circle cx='700' cy='350' r='30'/><rect x='0' y='270' width='280' height='160'/><circle cx='280' cy='350' r='80'/><path d='M0 60 H140 A290 290 0 0 1 140 640 H0'/><rect x='1120' y='270' width='280' height='160'/><circle cx='1120' cy='350' r='80'/><path d='M1400 60 H1260 A290 290 0 0 0 1260 640 H1400'/></svg>") center 50% / 1100px 550px no-repeat,
+    repeating-linear-gradient(90deg, rgb(230 237 243 / 0.035) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(0deg, transparent 0 140px, rgb(230 237 243 / 0.03) 140px 141px),
+    linear-gradient(rgb(180 120 60 / 0.06), rgb(180 120 60 / 0.03));
+}
+@media (max-width: 639px) {
+  .hero-bg--nba { background-size: auto, auto, 640px 320px, auto, auto, auto; }
+}
 .live-dot {
   position: relative;
   display: inline-block;
