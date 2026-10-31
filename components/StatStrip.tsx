@@ -14,7 +14,7 @@ export interface StatItem {
   spark?: { data: number[]; color: string; title: string };
 }
 
-function CountUp({ value, num, suffix = "" }: { value: string; num?: number; suffix?: string }) {
+export function CountUp({ value, num, suffix = "" }: { value: string; num?: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const el = ref.current;

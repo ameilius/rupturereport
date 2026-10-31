@@ -1,3 +1,4 @@
+import { Shim } from "@/components/Shim";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
@@ -108,12 +109,48 @@ export default function PlayerPageView({ params, league = "NFL" }: Props) {
   );
 }
 
+/** Header context from confirmed data only: NFL "Week 7 · @BAL", NBA "Playoffs G4 · @DEN" / "Game · @DEN". Unknowns omitted. */
+function headerContext(i: Injury, league: League): string | null {
+  const isGame = !!(i.stadium || i.opponent);
+  if (!isGame) return null;
+  const opp = i.opponent ? `${i.homeAway === "away" ? "@" : i.homeAway === "home" ? "vs " : "vs "}${i.opponent.abbreviation}` : null;
+  let when: string | null;
+  if (league === "NBA") {
+    const g = i.week ? ` G${i.week}` : "";
+    when = i.phase === "summer_league" ? `Summer League${g}` : i.phase === "preseason" ? "Preseason" : i.phase === "playoffs" ? `Playoffs${g}` : "Game";
+  } else {
+    when = i.phase === "preseason" ? "Preseason" : i.phase === "playoffs" ? "Playoffs" : i.week ? `Week ${i.week}` : "Game";
+  }
+  return [when, opp].filter(Boolean).join(" · ");
+}
+
 function PlayerSkeleton() {
+  // Mirrors header card, recovery stepper and tear card.
   return (
-    <div className="mt-6 animate-pulse" aria-busy="true">
-      <div className="h-10 w-2/3 rounded bg-surface" />
-      <div className="mt-4 h-5 w-1/3 rounded bg-surface" />
-      <div className="mt-10 h-64 rounded-xl bg-surface" />
+    <div aria-busy="true" aria-label="Loading player">
+      <Shim className="mt-1 h-3.5 w-32" />
+      <div className="mt-6 flex items-center gap-5 rounded-2xl border border-border bg-surface/60 p-5 sm:gap-7 sm:p-8">
+        <Shim className="h-[118px] w-[118px] shrink-0 !rounded-full" />
+        <div className="min-w-0 flex-1">
+          <Shim className="h-8 w-3/4 sm:h-12" />
+          <Shim className="mt-3 h-5 w-1/2" />
+          <Shim className="mt-3 h-6 w-40 !rounded-full" />
+          <Shim className="mt-3 h-4 w-32" />
+        </div>
+      </div>
+      <div className="mt-6 rounded-2xl border border-border bg-surface/60 p-5 sm:p-6">
+        <Shim className="h-3 w-36" />
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 sm:flex-col">
+              <Shim className="h-6 w-6 !rounded-full" /><Shim className="h-3 w-16" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <Shim className="mt-6 h-4 w-full" />
+      <Shim className="mt-2 h-4 w-2/3" />
+      <div className="mt-6 h-72 rounded-2xl border border-border bg-surface/60" />
     </div>
   );
 }
@@ -274,6 +311,21 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
           )}
         </p>
         {bio && <p className="mt-1.5 text-sm text-text/60" data-bio>{bio}</p>}
+        {injuries[0] && (() => {
+          const i0 = injuries[0];
+          const side = i0.bodySide === "left" || i0.bodySide === "right" ? i0.bodySide[0].toUpperCase() + i0.bodySide.slice(1) : null;
+          const ctx = headerContext(i0, league);
+          const ach = i0.injuryType === "Achilles";
+          return (
+            <p className="mt-3 flex flex-wrap items-center gap-2 text-sm" data-tear-badge>
+              <span className={`rr-pop inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${ach ? "border-amber/40 bg-amber/15 text-amber" : "border-teal/40 bg-teal/15 text-teal"}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${ach ? "bg-amber" : "bg-teal"}`} aria-hidden="true" />
+                {formatInjuryType(i0.injuryType)}{side ? ` · ${side}` : ""}
+              </span>
+              {ctx && <span className="font-medium text-text/80">{ctx}</span>}
+            </p>
+          );
+        })()}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           {lastModified && (
             <p className="text-sm text-text/70">

@@ -144,7 +144,15 @@ main { overflow-x: clip; }
 .rr-sw { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid #1F2933; border-radius: 9999px; background: rgb(18 24 33 / .85); margin-left: 16px; margin-right: auto; }
 .rr-sw a { display: inline-flex; align-items: center; justify-content: center; padding: 4px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8B98A5; text-decoration: none; }
 .rr-sw a:hover { color: #E6EDF3; }
-.rr-sw a[aria-current="page"] { background: rgb(20 184 166 / .16); color: #14B8A6; box-shadow: inset 0 0 0 1px rgb(20 184 166 / .45); }
+.rr-sw { position: relative; }
+.rr-sw a { position: relative; z-index: 1; flex: 1 1 0; transition: color .25s ease; }
+.rr-sw a[aria-current="page"] { color: #14B8A6; }
+/* Sliding highlight: one pill that glides between NFL and NBA on client navigation. */
+.rr-sw::before { content: ""; position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 3px); border-radius: 9999px;
+  background: rgb(20 184 166 / .16); box-shadow: inset 0 0 0 1px rgb(20 184 166 / .45), 0 0 14px rgb(20 184 166 / .18);
+  opacity: 0; transition: transform .35s cubic-bezier(.3,1.4,.5,1), opacity .2s ease; }
+.rr-sw[data-active="NFL"]::before { opacity: 1; }
+.rr-sw[data-active="NBA"]::before { opacity: 1; transform: translateX(calc(100% + 2px)); }
 .rr-sw a:focus-visible { outline: 2px solid #14B8A6; outline-offset: 1px; }
 @media (max-width: 639px) {
   .rr-sw { order: 3; margin: 0; }
@@ -175,3 +183,58 @@ main { overflow-x: clip; }
 .st-fact{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1F2933;font-size:13px}.st-fact:last-child{border:0}.st-fact .k{min-width:120px;color:#8B98A5;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding-top:2px}
 @media(max-width:600px){.st-fact{flex-direction:column;gap:4px}}
 a.st-pl{color:#E6EDF3;text-decoration:none;border-bottom:1px dotted #33414f}a.st-pl:hover{color:#14B8A6}
+
+/* ---------- Motion & micro-interactions (all disabled under prefers-reduced-motion) ---------- */
+@keyframes rr-grow { from { transform: scaleX(0); } }
+@keyframes rr-rise { from { transform: scaleY(0); } }
+@keyframes rr-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes rr-pop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes rr-halo { 0% { transform: scale(.8); opacity: .55; } 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes rr-glow { 0%,100% { box-shadow: 0 0 0 0 rgb(20 184 166 / 0); } 50% { box-shadow: 0 0 8px 1px rgb(20 184 166 / .7); } }
+@keyframes rr-shim { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Charts: with JS (html.rr-js) bars start collapsed and grow when <Reveal> marks them .rr-go on scroll-in.
+   Without JS / reduced motion they simply render at full size. */
+.rr-grow { transform-origin: left center; }
+.rr-grow-x { transform-box: fill-box; transform-origin: left center; }
+.rr-rise { transform-box: fill-box; transform-origin: center bottom; }
+.rr-js .rr-grow:not(.rr-go), .rr-js .rr-grow-x:not(.rr-go) { transform: scaleX(0); }
+.rr-js .rr-rise:not(.rr-go) { transform: scaleY(0); }
+.rr-js .rr-draw:not(.rr-go) { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.rr-grow.rr-go, .rr-grow-x.rr-go { animation: rr-grow .8s cubic-bezier(.2,.8,.2,1) both; }
+.rr-rise.rr-go { animation: rr-rise .6s cubic-bezier(.2,.8,.2,1) both; }
+.rr-draw.rr-go { stroke-dasharray: 1; animation: rr-draw 1.4s .3s ease-out both; }
+.rr-fill-x { transform-origin: left center; animation: rr-grow .5s ease-out both; }
+.rr-fill-y { transform-origin: center top; animation: rr-rise .5s ease-out both; }
+.rr-pop { animation: rr-pop .45s cubic-bezier(.2,.8,.2,1) both; }
+.rr-halo { background: var(--accent, #14B8A6); animation: rr-halo 1.8s ease-out infinite; }
+.rr-seg { transform-origin: left center; animation: rr-grow .35s ease-out both; }
+.rr-glow { animation: rr-grow .35s ease-out both, rr-glow 2.2s ease-in-out .6s infinite; }
+
+
+/* Tooltip: data-tip on hover / keyboard focus / tap. */
+.rr-tip { position: relative; }
+.rr-tip::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translate(-50%, 4px); white-space: nowrap;
+  padding: 4px 9px; border-radius: 8px; background: #0B0F14; border: 1px solid #33414f; color: #E6EDF3; font-size: 11px; font-weight: 600;
+  letter-spacing: 0; text-transform: none; box-shadow: 0 8px 24px rgb(0 0 0 / .45); opacity: 0; pointer-events: none; z-index: 30;
+  transition: opacity .15s ease, transform .15s ease; }
+.rr-tip:hover::after, .rr-tip:focus-visible::after, .rr-tip:active::after { opacity: 1; transform: translate(-50%, 0); }
+.st-row.rr-tip::after { left: auto; right: 0; transform: translateY(4px); }
+.st-row.rr-tip:hover::after, .st-row.rr-tip:focus-visible::after, .st-row.rr-tip:active::after { transform: none; }
+.st-row.rr-tip { border-radius: 6px; outline: none; transition: background-color .15s; }
+.st-row.rr-tip:hover, .st-row.rr-tip:focus-visible { background: rgb(20 184 166 / .06); }
+.st-row.rr-tip:focus-visible { box-shadow: 0 0 0 2px #14B8A6; }
+
+/* Whole tracker row is clickable (stretched link) with a visible keyboard ring. */
+.row-link::after { content: ""; position: absolute; inset: 0; }
+.row-accent:focus-within { background-color: rgb(20 184 166 / .08); box-shadow: inset 0 0 0 2px #14B8A6; }
+
+/* Skeleton shimmer */
+.rr-shim { background: linear-gradient(90deg, #121821 25%, #1a2430 37%, #121821 63%); background-size: 400% 100%; animation: rr-shim 1.4s ease infinite; border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rr-grow, .rr-grow-x, .rr-rise, .rr-draw, .rr-fill-x, .rr-fill-y, .rr-pop, .rr-halo, .rr-seg, .rr-glow, .rr-shim { animation: none !important; }
+  .rr-draw { stroke-dasharray: none; }
+  .rr-halo { display: none; }
+  .rr-sw::before, .rr-tip::after { transition: none; }
+}

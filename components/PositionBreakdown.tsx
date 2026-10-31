@@ -45,8 +45,8 @@ export default function PositionBreakdown({ rows }: { rows: TrackerRow[] }) {
             return (
               <g key={x.bucket}>
                 <rect x="0" y={y} width="82%" height={BAR} rx="4" fill="#1F2933" opacity="0.5" />
-                {x.acl > 0 && <rect x="0" y={y} width={`${wa}%`} height={BAR} rx="4" fill="#14B8A6" />}
-                {x.achilles > 0 && <rect x={`${wa}%`} y={y} width={`${w - wa}%`} height={BAR} rx="4" fill="#F59E0B" />}
+                {x.acl > 0 && <rect className="rr-grow-x" x="0" y={y} width={`${wa}%`} height={BAR} rx="4" fill="#14B8A6" />}
+                {x.achilles > 0 && <rect className="rr-grow-x" x={`${wa}%`} y={y} width={`${w - wa}%`} height={BAR} rx="4" fill="#F59E0B" />}
                 {x.acl > 0 && x.achilles > 0 && <rect x={`${wa}%`} y={y} width="2" height={BAR} fill="#121821" />}
                 <text x={`${w + 2}%`} y={y + BAR / 2} dominantBaseline="central" fontSize="13" fill="#E6EDF3" fontWeight="700">
                   {n}

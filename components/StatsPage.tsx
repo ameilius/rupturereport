@@ -4,6 +4,7 @@ import { getLeagueStats, type LeagueStats, type SeriesBucket, type Split } from 
 import { cfg, homePath, playerPath, statsPath, type League } from "@/lib/leagues";
 import { breadcrumbJsonLd, datasetJsonLd, SITE_URL } from "@/lib/structured-data";
 import { formatDate } from "@/lib/format";
+import { CountUp } from "@/components/StatStrip";
 
 const TEAL = "#14B8A6";
 const AMB = "#F59E0B";
@@ -29,9 +30,9 @@ function Bars({ rows, max }: { rows: Split[]; max?: number }) {
   return (
     <div className="mt-3">
       {rows.map((r) => (
-        <div key={r.label} className="st-row" aria-label={`${r.label}: ${r.total} (${r.acl} ACL, ${r.achilles} Achilles)`}>
+        <div key={r.label} className="st-row rr-tip" tabIndex={0} data-tip={`${r.acl} ACL · ${r.achilles} Achilles`} aria-label={`${r.label}: ${r.total} (${r.acl} ACL, ${r.achilles} Achilles)`}>
           <span>{r.label}</span>
-          <div className="st-bar" style={{ width: r.total ? `${Math.max((r.total / m) * 100, 4).toFixed(1)}%` : "0%" }}>
+          <div className="st-bar rr-grow" style={{ width: r.total ? `${Math.max((r.total / m) * 100, 4).toFixed(1)}%` : "0%" }}>
             <i style={{ width: `${r.total ? (r.acl / r.total) * 100 : 0}%`, background: TEAL }} />
             <i style={{ width: `${r.total ? (r.achilles / r.total) * 100 : 0}%`, background: AMB }} />
           </div>
@@ -84,8 +85,8 @@ function SeriesChart({ series, gran }: { series: SeriesBucket[]; gran: "week" | 
         const ya = (b.acl / mx) * ch, yc = (b.achilles / mx) * ch;
         return (
           <g key={b.start}>
-            {b.acl > 0 && <rect x={x} y={H - pb - ya} width={w} height={ya} fill={TEAL} rx="2"><title>{`${short(b.start)}: ${b.acl} ACL`}</title></rect>}
-            {b.achilles > 0 && <rect x={x} y={H - pb - ya - yc} width={w} height={yc} fill={AMB} rx="2"><title>{`${short(b.start)}: ${b.achilles} Achilles`}</title></rect>}
+            {b.acl > 0 && <rect className="rr-rise" style={{ animationDelay: `${i * 25}ms` }} x={x} y={H - pb - ya} width={w} height={ya} fill={TEAL} rx="2"><title>{`${short(b.start)}: ${b.acl} ACL`}</title></rect>}
+            {b.achilles > 0 && <rect className="rr-rise" style={{ animationDelay: `${i * 25}ms` }} x={x} y={H - pb - ya - yc} width={w} height={yc} fill={AMB} rx="2"><title>{`${short(b.start)}: ${b.achilles} Achilles`}</title></rect>}
             {i % every === 0 && (
               <text x={x + w / 2} y={H - 8} fill={MUT} fontSize="10" textAnchor="middle">{gran === "week" ? short(b.start) : mon(b.start)}</text>
             )}
@@ -94,7 +95,7 @@ function SeriesChart({ series, gran }: { series: SeriesBucket[]; gran: "week" | 
       })}
       {pts.length > 0 && (
         <>
-          <polyline points={pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ")} fill="none" stroke="#E6EDF3" strokeWidth="2" />
+          <polyline className="rr-draw" pathLength={1} points={pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ")} fill="none" stroke="#E6EDF3" strokeWidth="2" />
           <circle cx={last[0]} cy={last[1]} r="4" fill="#E6EDF3" />
           <text x={last[0] - 8} y={last[1] - 8} fill="#E6EDF3" fontSize="11" textAnchor="end" fontWeight="700">
             {series.at(-1)!.cumulative} total (line: own scale)
@@ -172,17 +173,17 @@ export default async function StatsPage({ league }: { league: League }) {
       <h2 className="sr-only">{title}</h2>
 
       <dl className="st-kpis">
-        <div className="st-kpi"><dt>Tracked tears</dt><dd>{n}</dd></div>
-        <div className="st-kpi"><dt>ACL</dt><dd style={{ color: TEAL }}>{s.acl}</dd></div>
-        <div className="st-kpi"><dt>Achilles</dt><dd style={{ color: AMB }}>{s.achilles}</dd></div>
+        <div className="st-kpi"><dt>Tracked tears</dt><dd><CountUp value={String(n)} num={n} /></dd></div>
+        <div className="st-kpi"><dt>ACL</dt><dd style={{ color: TEAL }}><CountUp value={String(s.acl)} num={s.acl} /></dd></div>
+        <div className="st-kpi"><dt>Achilles</dt><dd style={{ color: AMB }}><CountUp value={String(s.achilles)} num={s.achilles} /></dd></div>
         <div className="st-kpi">
           <dt>In games</dt>
-          <dd>{n ? `${pct(s.inGame, n)}%` : "—"}</dd>
+          <dd>{n ? <CountUp value={`${pct(s.inGame, n)}%`} num={pct(s.inGame, n)} suffix="%" /> : "—"}</dd>
           <div className="st-x">{s.inGame} of {n} · {s.nonGame} practice/offseason</div>
         </div>
         <div className="st-kpi">
           <dt>Median tear → surgery</dt>
-          <dd>{sm !== null ? fmtNum(sm) : "—"}<span className="st-x"> days</span></dd>
+          <dd>{sm !== null ? <CountUp value={fmtNum(sm)} num={Number.isInteger(sm) ? sm : undefined} /> : "—"}<span className="st-x"> days</span></dd>
           <div className="st-x">{s.surgery.length ? `n=${s.surgery.length} with a reported surgery date` : "Not reported yet"}</div>
         </div>
       </dl>
@@ -252,7 +253,7 @@ export default async function StatsPage({ league }: { league: League }) {
             {s.stages.map((x) => (
               <div key={x.stage} className="st-row">
                 <span>{x.label}</span>
-                <div className="st-bar" style={{ width: `${Math.max((x.count / Math.max(n, 1)) * 100, 4).toFixed(1)}%` }}>
+                <div className="st-bar rr-grow" style={{ width: `${Math.max((x.count / Math.max(n, 1)) * 100, 4).toFixed(1)}%` }}>
                   <i style={{ width: "100%", background: x.stage === "diagnosis" ? "#3b4a58" : TEAL }} />
                 </div>
                 <span className="st-num"><b>{x.count}</b></span>

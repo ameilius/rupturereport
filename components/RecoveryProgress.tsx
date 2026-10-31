@@ -36,15 +36,22 @@ export function RecoveryStepper({
             {i < TRACK.length - 1 && (
               <>
                 {/* connector: vertical on mobile, horizontal on sm+ */}
-                <span aria-hidden="true" className="absolute left-[11px] top-6 h-[calc(100%-1.5rem)] w-0.5 sm:hidden"
-                  style={{ background: done ? color : "#1F2933" }} />
-                <span aria-hidden="true" className="absolute left-[calc(50%+14px)] right-[calc(-50%+14px)] top-[11px] hidden h-0.5 sm:block"
-                  style={{ background: done ? color : "#1F2933" }} />
+                <span aria-hidden="true" className="absolute left-[11px] top-6 h-[calc(100%-1.5rem)] w-0.5 overflow-hidden bg-border sm:hidden">
+                  {done && <span className="rr-fill-y block h-full w-full" style={{ background: color, animationDelay: `${i * 160}ms` }} />}
+                </span>
+                <span aria-hidden="true" className="absolute left-[calc(50%+14px)] right-[calc(-50%+14px)] top-[11px] hidden h-0.5 overflow-hidden bg-border sm:block">
+                  {done && <span className="rr-fill-x block h-full w-full" style={{ background: color, animationDelay: `${i * 160}ms` }} />}
+                </span>
               </>
             )}
-            <span aria-hidden="true" className="relative inline-flex h-6 w-6 shrink-0 items-center justify-center">
+            <span
+              data-tip={`${t.label} · ${dates[i] ? shortDate(dates[i]!) : done || current ? "date not reported" : "not reached yet"}`}
+              aria-hidden="true"
+              className="rr-tip rr-pop relative inline-flex h-6 w-6 shrink-0 cursor-default items-center justify-center rounded-full"
+              style={{ animationDelay: `${i * 160}ms` }}
+            >
               {current && (
-                <span className="absolute inset-0 rounded-full opacity-40 motion-safe:animate-ping" style={{ background: fill }} />
+                <span className="rr-halo absolute -inset-1 rounded-full" style={{ background: fill }} />
               )}
               <span
                 className="relative inline-flex h-6 w-6 items-center justify-center rounded-full border-2 text-[11px] font-bold"
@@ -89,8 +96,9 @@ export function MiniStageBar({ stage, label }: { stage: string | null; label: st
         {TRACK.map((t, i) => (
           <span
             key={t.key}
-            className={`h-1.5 w-4 rounded-sm ${
-              i < cur ? "bg-teal" : i === cur ? (reinjured ? "bg-amber" : "bg-teal motion-safe:animate-pulse") : "bg-border"
+            style={{ animationDelay: `${i * 70}ms` }}
+            className={`rr-seg h-1.5 w-4 rounded-sm ${
+              i < cur ? "bg-teal" : i === cur ? (reinjured ? "bg-amber" : "bg-teal rr-glow") : "bg-border"
             }`}
           />
         ))}

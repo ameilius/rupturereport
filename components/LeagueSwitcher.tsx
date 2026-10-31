@@ -12,7 +12,7 @@ export default function LeagueSwitcher({ league: forced }: { league?: League } =
   // Stats pages switch to the same page of the other league.
   const stats = /^(\/nba)?\/stats\/?$/.test(pathname ?? "");
   return (
-    <nav aria-label="League" className="rr-sw">
+    <nav aria-label="League" className="rr-sw" data-active={league ?? undefined}>
       <Link href={stats ? "/stats" : "/"} aria-current={league === "NFL" ? "page" : undefined}>NFL</Link>
       <Link href={stats ? "/nba/stats" : "/nba"} aria-current={league === "NBA" ? "page" : undefined}>NBA</Link>
     </nav>

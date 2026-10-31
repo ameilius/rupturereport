@@ -197,9 +197,9 @@ export default function InjuryTracker({
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="row-accent">
+                  <tr key={r.id} className="row-accent relative">
                     <td className="px-4 py-2.5 font-medium">
-                      <Link href={playerPath(league, r.slug)} className="row-name flex items-center gap-3 hover:text-teal">
+                      <Link href={playerPath(league, r.slug)} className="row-name row-link flex items-center gap-3 hover:text-teal focus:outline-none">
                         <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={32} league={league} />
                         {r.name}
                       </Link>
@@ -231,7 +231,7 @@ export default function InjuryTracker({
               const surf = nba ? null : surfaceLabel(r);
               return (
                 <li key={r.id}>
-                  <Link href={playerPath(league, r.slug)} className="block px-3.5 py-3 active:bg-border/40">
+                  <Link href={playerPath(league, r.slug)} className="block px-3.5 py-3 transition-colors active:bg-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal">
                     <div className="flex items-center gap-3">
                       <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={36} league={league} />
                       <div className="min-w-0 flex-1">

@@ -1,3 +1,4 @@
+import Reveal from "@/components/Reveal";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -50,8 +51,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-bg text-text`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} bg-bg text-text`}>
+        {/* Before paint: enable scroll-in chart animations (skipped for reduced motion; undone if JS never hydrates). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('rr-js');setTimeout(function(){if(!d.dataset.rrReveal)d.classList.remove('rr-js')},4000)})()",
+          }}
+        />
+        {children}
+        <Reveal />
+      </body>
     </html>
   );
 }

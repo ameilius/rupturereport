@@ -1,3 +1,4 @@
+import { Shim } from "@/components/Shim";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
 import InjuryTracker from "@/components/InjuryTracker";
@@ -234,17 +235,62 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
 }
 
 export function HubSkeleton() {
+  // Mirrors the hub layout (eyebrow, title, 5 stat cards, breakdown card, filters, table/cards) so nothing jumps on load.
   return (
-    <div aria-busy="true" aria-label="Loading tear data" className="animate-pulse">
-      <div className="h-4 w-40 rounded bg-surface" />
-      <div className="mt-3 h-10 w-2/3 rounded bg-surface" />
+    <div aria-busy="true" aria-label="Loading tear data">
+      <Shim className="h-3.5 w-44" />
+      <Shim className="mt-3 h-9 w-4/5 sm:h-12 sm:w-2/3" />
+      <Shim className="mt-3 h-4 w-full max-w-xl" />
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-20 rounded-xl bg-surface" />
+          <div key={i} className="rounded-xl border border-border bg-surface/60 p-4">
+            <Shim className="h-2.5 w-20" />
+            <Shim className="mt-3 h-7 w-14" />
+            <Shim className="mt-3 h-5 w-full max-w-[120px]" />
+          </div>
         ))}
       </div>
-      <div className="mt-8 h-10 rounded-lg bg-surface" />
-      <div className="mt-4 h-96 rounded-xl bg-surface" />
+      <div className="mt-4 rounded-xl border border-border bg-surface/60 p-4 sm:p-5">
+        <Shim className="h-3 w-40" />
+        {[82, 64, 30, 96].map((w, i) => (
+          <div key={i} className="mt-4 flex items-center gap-3">
+            <Shim className="h-3.5 w-24 shrink-0" />
+            <Shim className="h-4" />
+            <div className="h-4 rounded-md bg-border/40" style={{ width: `${w * 0.6}%` }} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-8 flex flex-wrap gap-2">
+        {[180, 130, 110, 120].map((w, i) => (
+          <div key={i} style={{ width: w }}><Shim className="h-9" /></div>
+        ))}
+      </div>
+      <div className="mt-4 hidden overflow-hidden rounded-xl border border-border md:block">
+        <div className="h-10 bg-surface" />
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 border-t border-border px-4 py-3">
+            <Shim className="h-8 w-8 shrink-0 !rounded-full" />
+            <Shim className="h-3.5 w-36" />
+            <Shim className="ml-6 h-3.5 w-12" />
+            <Shim className="h-5 w-14 !rounded-full" />
+            <Shim className="h-3.5 w-16" />
+            <Shim className="h-2 w-24" />
+            <Shim className="h-3.5 w-20" />
+          </div>
+        ))}
+      </div>
+      <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border md:hidden">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <li key={i} className="px-3.5 py-3">
+            <div className="flex items-center gap-3">
+              <Shim className="h-9 w-9 shrink-0 !rounded-full" />
+              <div className="flex-1"><Shim className="h-4 w-36" /><Shim className="mt-1.5 h-3 w-28" /></div>
+              <Shim className="h-5 w-14 !rounded-full" />
+            </div>
+            <div className="mt-2 flex justify-between pl-12"><Shim className="h-3 w-28" /><Shim className="h-2 w-20" /></div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
