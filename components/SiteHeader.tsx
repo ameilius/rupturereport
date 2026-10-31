@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import CopyrightYear from "@/components/CopyrightYear";
 import LeagueSwitcher, { MainNavLinks } from "@/components/LeagueSwitcher";
+import type { League } from "@/lib/leagues";
 
-export function SiteHeader() {
+export function SiteHeader({ league }: { league?: League } = {}) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-bg/90 backdrop-blur-md supports-[backdrop-filter]:bg-bg/70">
       <div className="rr-hdr mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-6 sm:py-0">
@@ -27,11 +28,11 @@ export function SiteHeader() {
           />
         </Link>
         <Suspense fallback={<nav aria-label="League" className="rr-sw"><Link href="/">NFL</Link><Link href="/nba">NBA</Link></nav>}>
-          <LeagueSwitcher />
+          <LeagueSwitcher league={league} />
         </Suspense>
         <nav aria-label="Main" className="flex items-center gap-5 text-sm">
           <Suspense fallback={<><Link href="/" className="text-muted hover:text-text">Tracker</Link><Link href="/players" className="text-muted hover:text-text">Players</Link><Link href="/stats" className="text-muted hover:text-text">Stats</Link></>}>
-            <MainNavLinks />
+            <MainNavLinks league={league} />
           </Suspense>
           <Link href="/contact" className="text-muted hover:text-text">Contact</Link>
         </nav>
@@ -60,7 +61,9 @@ export function SiteFooter() {
               <li><Link href="/" className="text-text hover:text-teal">NFL tracker</Link></li>
               <li><Link href="/players" className="text-text hover:text-teal">NFL players</Link></li>
               <li><Link href="/nba" className="text-text hover:text-teal">NBA tracker</Link></li>
+              <li><Link href="/stats" className="text-text hover:text-teal">NFL stats</Link></li>
               <li><Link href="/nba/players" className="text-text hover:text-teal">NBA players</Link></li>
+              <li><Link href="/nba/stats" className="text-text hover:text-teal">NBA stats</Link></li>
               <li><Link href="/contact" className="text-text hover:text-teal">Contact</Link></li>
               <li><Link href="/terms" className="text-text hover:text-teal">Terms &amp; data license</Link></li>
             </ul>

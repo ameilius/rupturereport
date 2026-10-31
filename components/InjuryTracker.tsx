@@ -226,32 +226,36 @@ export default function InjuryTracker({
             </table>
           </div>
 
-          <ul className="mt-4 space-y-3 md:hidden">
-            {filtered.map((r) => (
-              <li key={r.id}>
-                <Link href={playerPath(league, r.slug)} className="glass block rounded-xl border p-4 active:bg-border/40">
-                  <div className="flex items-start justify-between gap-3">
+          <ul className="glass mt-4 divide-y divide-border overflow-hidden rounded-xl border md:hidden">
+            {filtered.map((r) => {
+              const surf = nba ? null : surfaceLabel(r);
+              return (
+                <li key={r.id}>
+                  <Link href={playerPath(league, r.slug)} className="block px-3.5 py-3 active:bg-border/40">
                     <div className="flex items-center gap-3">
-                      <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={44} league={league} />
-                      <div>
-                        <p className="font-semibold">{r.name}</p>
-                        <p className="flex items-center gap-1.5 text-sm text-muted">
-                          <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={18} league={league} />
-                          {[r.position, r.team].filter(Boolean).join(" · ")}
+                      <PlayerAvatar name={r.name} team={r.team} headshotPath={r.headshot} size={36} league={league} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[15px] font-semibold leading-tight">{r.name}</p>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted">
+                          <TeamLogo abbr={r.team} name={r.teamName} logoPath={r.teamLogo} size={16} league={league} />
+                          {[r.team, r.position].filter(Boolean).join(" · ")}
+                          <span aria-hidden="true">·</span>
+                          <time dateTime={r.injuryDate ?? undefined}>{fmt(r.injuryDate, showYear)}</time>
                         </p>
                       </div>
+                      <Badge type={r.injuryType} side={r.bodySide} />
                     </div>
-                    <Badge type={r.injuryType} side={r.bodySide} />
-                  </div>
-                  <dl className={`mt-3 grid ${nba ? "grid-cols-2" : "grid-cols-3"} gap-2 text-xs`}>
-                    <div><dt className="text-muted">Date</dt><dd>{fmt(r.injuryDate, showYear)}</dd></div>
-                    <div><dt className="text-muted">{nba ? "Game" : "Where"}</dt><dd>{context(r, league)}</dd></div>
-                    {!nba && <div><dt className="text-muted">Surface</dt><dd>{surfaceLabel(r)}</dd></div>}
-                  </dl>
-                  <div className="mt-3 flex items-center gap-2 text-xs text-muted">Stage: <MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></div>
-                </Link>
-              </li>
-            ))}
+                    <div className="mt-2 flex items-center justify-between gap-3 pl-12 text-[13px] text-muted">
+                      <span className="min-w-0 truncate">
+                        {context(r, league)}
+                        {surf && surf !== "—" ? <> · <span className="text-text/80">{surf}</span></> : null}
+                      </span>
+                      <span className="shrink-0"><MiniStageBar stage={r.stage} label={r.stage ? STAGE[r.stage] ?? r.stage : "No update"} /></span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </>
       )}

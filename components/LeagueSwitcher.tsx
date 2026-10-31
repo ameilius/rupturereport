@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { leagueFromPathname } from "@/lib/leagues";
+import { leagueFromPathname, type League } from "@/lib/leagues";
 
 /** NFL | NBA pill next to the logo. Neutral pages (contact, terms) highlight neither league. */
-export default function LeagueSwitcher() {
+/** `league` overrides the URL (404s are rewritten, so the pathname alone can't tell). */
+export default function LeagueSwitcher({ league: forced }: { league?: League } = {}) {
   const pathname = usePathname();
-  const league = leagueFromPathname(pathname);
+  const league = forced ?? leagueFromPathname(pathname);
   // Stats pages switch to the same page of the other league.
   const stats = /^(\/nba)?\/stats\/?$/.test(pathname ?? "");
   return (
@@ -19,9 +20,9 @@ export default function LeagueSwitcher() {
 }
 
 /** Tracker / Players links follow the league being viewed (NFL by default). */
-export function MainNavLinks() {
+export function MainNavLinks({ league: forced }: { league?: League } = {}) {
   const pathname = usePathname();
-  const league = leagueFromPathname(pathname);
+  const league = forced ?? leagueFromPathname(pathname);
   const base = league === "NBA" ? "/nba" : "";
   const onStats = pathname === `${base}/stats`;
   return (
