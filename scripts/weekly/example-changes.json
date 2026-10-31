@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-03",
+  "name": "weekly_acl_achilles",
+  "title": "Weekly ACL & Achilles update",
+  "summary": "Example only. Every field must come from a credible source; leave unknowns out (they become NULL).",
+  "players": [
+    { "league": "NFL", "slug": "example-player", "firstName": "Example", "lastName": "Player", "position": "WR", "team": "BUF",
+      "dob": "2000-01-01", "heightIn": 72, "weightLb": 200 }
+  ],
+  "tears": [
+    { "league": "NFL", "slug": "example-player", "type": "ACL", "date": "2026-11-02", "week": 9, "stadium": "highmark-stadium",
+      "homeAway": "home", "opponent": "MIA", "mechanism": null, "side": "left", "phase": "regular",
+      "notes": "What the source says happened.", "source": "https://example.com/report" }
+  ],
+  "updates": [
+    { "league": "NFL", "slug": "example-player", "type": "ACL", "tearDate": "2026-11-02", "date": "2026-11-03", "stage": "diagnosis",
+      "label": "Torn ACL confirmed", "notes": "Team confirmed a torn ACL.", "source": "https://example.com/confirm" }
+  ],
+  "playerUpdates": []
+}

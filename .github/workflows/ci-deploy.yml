@@ -39,3 +39,32 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -t ed25519 "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
           ssh -i ~/.ssh/id_ed25519 "$USER@$HOST" deploy
+
+  # Post-deploy checks against the live site. Fails the run only on real regressions (broken/missing share
+  # cards or tags, horizontal overflow at 390/1440, console errors); network blips are retried.
+  post-deploy-audit:
+    needs: deploy
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SITE: https://rupturereport.com
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Wait for the new build to serve
+        run: |
+          for i in $(seq 1 24); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' -A 'Mozilla/5.0 RR-audit' "$SITE/")" = 200 ] && break; sleep 5
+          done
+          sleep 10
+      - name: Link previews (OG / Twitter cards)
+        run: node scripts/audit/og-check.mjs
+      - name: Install Playwright Chromium (CI only, not a project dependency)
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1
+          npx playwright install --with-deps chromium
+      - name: Overflow + console errors (390 / 1440)
+        run: NODE_PATH=/tmp/pw/node_modules node scripts/audit/overflow-check.mjs
