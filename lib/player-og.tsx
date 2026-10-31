@@ -140,6 +140,8 @@ export async function renderPlayerOg(slug: string, league: League = "NFL") {
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
+                flexShrink: 0,
+                whiteSpace: "nowrap",
                 fontSize: 28,
                 fontWeight: 800,
                 letterSpacing: 2,
@@ -154,13 +156,13 @@ export async function renderPlayerOg(slug: string, league: League = "NFL") {
               {injury}
             </div>
             {ctx || seasonText ? (
-              <div style={{ display: "flex", fontSize: 30, fontWeight: 600, color: "#C9D3DC" }}>{[ctx, seasonText].filter(Boolean).join(" · ")}</div>
+              <div style={{ display: "flex", whiteSpace: "nowrap", fontSize: 30, fontWeight: 600, color: "#C9D3DC" }}>{ctx ?? seasonText}</div>
             ) : null}
           </div>
           <div
             style={{
               display: "flex",
-              fontSize: name.length > 22 ? 72 : 92,
+              fontSize: name.length <= 13 ? 92 : name.length <= 18 ? 76 : 64,
               fontWeight: 800,
               lineHeight: 1.05,
               marginTop: 12,

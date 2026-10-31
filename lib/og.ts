@@ -47,7 +47,7 @@ export function leagueOgVersion(s: { total: number; acl: number; achilles: numbe
 export function playerOgImage(d: PlayerDetail, league: League) {
   const i = d.injuries[0];
   const v = ogHash([
-    "p2",
+    "p3",
     d.player.fullName,
     d.player.team?.abbreviation,
     d.player.position,
