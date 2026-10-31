@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { statsOgImage } from "@/lib/og";
+import { liveLeagueOgVersion } from "@/lib/league-og";
 import { getSeasonInfo } from "@/lib/seasons";
 import { seasonLabel, type League } from "@/lib/leagues";
 import { statsCopy } from "@/components/StatsPage";
@@ -11,7 +12,7 @@ export async function statsMetadata(league: League): Promise<Metadata> {
   } catch {}
   const label = seasonLabel(league, season);
   const { title, description, path } = statsCopy(league, label);
-  const img = statsOgImage(league);
+  const img = statsOgImage(league, await liveLeagueOgVersion(league));
   return {
     title: { absolute: `${title} | Rupture Report` },
     description,

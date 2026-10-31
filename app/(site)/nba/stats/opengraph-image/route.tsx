@@ -1,6 +1,6 @@
-import { statsOgResponse } from "@/lib/stats-og";
+import { leagueOgResponse } from "@/lib/league-og";
 
-// Stable URL (route handler, not the file convention), like /nba/opengraph-image.
+// Stable URL (route handler); metadata appends ?v=<hash of the live counts>.
 export async function GET() {
-  return statsOgResponse("NBA");
+  return leagueOgResponse("NBA", "stats");
 }

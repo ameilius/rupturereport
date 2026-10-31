@@ -8,6 +8,8 @@ import { bioLine } from "@/lib/format";
 import { readUpload } from "@/lib/uploads";
 import { STAGE_LABELS, formatInjuryType, getPlayerBySlug } from "@/lib/players";
 import { seasonLabel, type League } from "@/lib/leagues";
+import { tearContext, tearSide } from "@/lib/tear-context";
+import { TRACK, trackIndex } from "@/lib/recovery";
 
 export const ogSize = { width: 1200, height: 630 };
 
@@ -26,6 +28,10 @@ export async function renderPlayerOg(slug: string, league: League = "NFL") {
   let headshotPath: string | null = null;
   let logoPath: string | null = null;
   let injury = "ACL / Achilles";
+  let isAch = false;
+  let ctx: string | null = null;
+  let seasonText: string | null = null;
+  let step = -1;
   let stage = "Recovery tracker";
   let bio: string | null = null;
   try {
@@ -41,8 +47,13 @@ export async function renderPlayerOg(slug: string, league: League = "NFL") {
       bio = bioLine(data.player);
       const i = data.injuries[0];
       if (i) {
-        injury = `${formatInjuryType(i.injuryType)} tear · ${seasonLabel(league, i.season ?? 0)} season`;
+        const side = tearSide(i);
+        injury = `${formatInjuryType(i.injuryType)}${side ? ` · ${side}` : ""}`.toUpperCase();
+        isAch = i.injuryType === "Achilles";
+        ctx = tearContext(i, league);
+        seasonText = i.season ? `${seasonLabel(league, i.season)} season` : null;
         const latest = i.updates.at(-1);
+        step = trackIndex(latest?.stage);
         stage = latest ? STAGE_LABELS[latest.stage] : "Awaiting update";
       }
     }
@@ -106,8 +117,7 @@ export async function renderPlayerOg(slug: string, league: League = "NFL") {
           >
             RUPTURE REPORT
           </div>
-          {nba ? (
-            <div
+                      <div
               style={{
                 display: "flex",
                 fontSize: 24,
@@ -116,24 +126,36 @@ export async function renderPlayerOg(slug: string, league: League = "NFL") {
                 color: "#E6EDF3",
                 padding: "4px 16px",
                 borderRadius: 999,
-                border: `3px solid ${accent}`,
+                border: `3px solid ${nba ? accent : "#14B8A6"}`,
               }}
             >
-              NBA
+              {league}
             </div>
-          ) : null}
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 40 }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-          <div
-            style={{
-              display: "flex",
-              fontSize: 36,
-              fontWeight: 700,
-              color: "#F59E0B",
-            }}
-          >
-            {injury}
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontSize: 28,
+                fontWeight: 800,
+                letterSpacing: 2,
+                padding: "6px 20px",
+                borderRadius: 999,
+                color: isAch ? "#F59E0B" : "#14B8A6",
+                background: isAch ? "rgba(245,158,11,0.15)" : "rgba(20,184,166,0.15)",
+                border: `2px solid ${isAch ? "rgba(245,158,11,0.45)" : "rgba(20,184,166,0.45)"}`,
+              }}
+            >
+              <div style={{ display: "flex", width: 12, height: 12, borderRadius: 6, background: isAch ? "#F59E0B" : "#14B8A6" }} />
+              {injury}
+            </div>
+            {ctx || seasonText ? (
+              <div style={{ display: "flex", fontSize: 30, fontWeight: 600, color: "#C9D3DC" }}>{[ctx, seasonText].filter(Boolean).join(" · ")}</div>
+            ) : null}
           </div>
           <div
             style={{
@@ -220,11 +242,21 @@ export async function renderPlayerOg(slug: string, league: League = "NFL") {
             paddingTop: 28,
           }}
         >
-          <div style={{ display: "flex", fontSize: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", fontSize: 32 }}>
             <span style={{ color: "#8B98A5", marginRight: 12 }}>
               Current stage:
             </span>
             <span style={{ color: "#14B8A6", fontWeight: 700 }}>{stage}</span>
+            {step >= 0 ? (
+              <div style={{ display: "flex", alignItems: "center", marginLeft: 22 }}>
+                {TRACK.map((t, k) => (
+                  <div key={t.key} style={{ display: "flex", alignItems: "center" }}>
+                    {k > 0 ? <div style={{ display: "flex", width: 22, height: 4, background: k <= step ? "#14B8A6" : "#1F2933" }} /> : null}
+                    <div style={{ display: "flex", width: 16, height: 16, borderRadius: 8, background: k <= step ? "#14B8A6" : "#1F2933", border: k === step ? "3px solid #99F6E4" : "3px solid transparent" }} />
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
           <div style={{ display: "flex", fontSize: 26, color: "#8B98A5" }}>
             rupturereport.com

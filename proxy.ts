@@ -11,7 +11,7 @@ const NBA_PLAYER_PAGE = /^\/nba\/players\/([^/]+)\/?$/;
 
 const SINGLE_SEGMENT = /^\/([^/.]+)\/?$/;
 // Real top-level pages; anything else with one segment is a season (/2025) or a 404.
-const TOP_LEVEL = new Set(["players", "stats", "terms", "contact", "admin", "nba"]);
+const TOP_LEVEL = new Set(["opengraph-image", "players", "stats", "terms", "contact", "admin", "nba"]);
 
 function notFoundRewrite(req: NextRequest, league: "NFL" | "NBA" = "NFL") {
   const url = req.nextUrl.clone();

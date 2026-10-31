@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { defaultOgImage, nbaOgImage } from "@/lib/og";
+import { leagueOgImage } from "@/lib/og";
 import { LEAGUE } from "@/lib/seasons";
 import { seasonHubPath, seasonLabel, type League } from "@/lib/leagues";
 
@@ -23,9 +23,10 @@ export function seasonCopy(season: number, isCurrent: boolean, league: League = 
   return { title, description, path };
 }
 
-export function seasonMetadata(season: number, isCurrent: boolean, league: League = "NFL"): Metadata {
+/** `ogVersion`: ?v= for the league card (see liveLeagueOgVersion), so shares never show stale counts. */
+export function seasonMetadata(season: number, isCurrent: boolean, league: League = "NFL", ogVersion?: string | null): Metadata {
   const { title, description, path } = seasonCopy(season, isCurrent, league);
-  const img = league === "NBA" ? nbaOgImage : defaultOgImage;
+  const img = leagueOgImage(league, ogVersion);
   const label = seasonLabel(league, season);
   return {
     title: { absolute: `${title} | Rupture Report` },

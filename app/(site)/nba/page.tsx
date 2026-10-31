@@ -4,15 +4,16 @@ import { connection } from "next/server";
 import SeasonHub, { HubSkeleton } from "@/components/SeasonHub";
 import { getSeasonInfo } from "@/lib/seasons";
 import { seasonMetadata } from "@/lib/season-meta";
+import { liveLeagueOgVersion } from "@/lib/league-og";
 
 // "/nba" always shows the CURRENT NBA season (settings.current_season_nba). /nba/{current} 308-redirects here (see proxy.ts).
 export async function generateMetadata(): Promise<Metadata> {
   await connection();
   try {
     const info = await getSeasonInfo("NBA");
-    return seasonMetadata(info.current, true, "NBA");
+    return seasonMetadata(info.current, true, "NBA", await liveLeagueOgVersion("NBA"));
   } catch {
-    return seasonMetadata(new Date().getUTCFullYear(), true, "NBA");
+    return seasonMetadata(new Date().getUTCFullYear(), true, "NBA", await liveLeagueOgVersion("NBA"));
   }
 }
 

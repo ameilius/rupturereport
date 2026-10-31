@@ -225,6 +225,17 @@ a.st-pl{color:#E6EDF3;text-decoration:none;border-bottom:1px dotted #33414f}a.st
 .st-row.rr-tip:hover, .st-row.rr-tip:focus-visible { background: rgb(20 184 166 / .06); }
 .st-row.rr-tip:focus-visible { box-shadow: 0 0 0 2px #14B8A6; }
 
+.rr-tip-row { display: block; border-radius: 6px; outline: none; cursor: default; transition: background-color .15s; }
+.rr-tip-row:hover, .rr-tip-row:focus-visible { background: rgb(20 184 166 / .06); }
+.rr-tip-row:focus-visible { box-shadow: 0 0 0 2px #14B8A6; }
+.rr-tip-row::after { left: auto; right: 0; transform: translateY(4px); }
+.rr-tip-row:hover::after, .rr-tip-row:focus-visible::after, .rr-tip-row:active::after { transform: none; }
+/* Recovery stepper: tooltip below the dot so it never covers the section heading. */
+.rr-tip-below::after { bottom: auto; top: calc(100% + 6px); transform: translate(-50%, -4px); }
+.rr-tip-below:hover::after, .rr-tip-below:active::after { transform: translate(-50%, 0); }
+@media (max-width: 639px) { .rr-tip-below::after { left: calc(100% + 8px); top: 50%; transform: translate(-4px, -50%); }
+  .rr-tip-below:hover::after, .rr-tip-below:active::after { transform: translate(0, -50%); } }
+
 /* Whole tracker row is clickable (stretched link) with a visible keyboard ring. */
 .row-link::after { content: ""; position: absolute; inset: 0; }
 .row-accent:focus-within { background-color: rgb(20 184 166 / .08); box-shadow: inset 0 0 0 2px #14B8A6; }

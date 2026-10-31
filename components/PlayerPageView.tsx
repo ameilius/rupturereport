@@ -18,6 +18,8 @@ import { contrast, localImage, teamColors } from "@/lib/images";
 import { RecoveryStepper } from "@/components/RecoveryProgress";
 import InjuryBodyIcon, { injuryCaption } from "@/components/InjuryBodyIcon";
 import { trackDates } from "@/lib/recovery";
+import { tearContext, tearSide } from "@/lib/tear-context";
+import { playerOgImage } from "@/lib/og";
 import { organizationRef } from "@/lib/structured-data";
 import { cfg, homePath, playerPath, playersPath, seasonLabel, type League } from "@/lib/leagues";
 import { conditionAnatomy, conditionName, injurySentence, playerInjuryFacts } from "@/lib/summaries";
@@ -65,6 +67,7 @@ export async function playerMetadata({ params, league = "NFL" }: Props): Promise
     return { title: "Player not found", robots: { index: false } };
   }
   const { title, description } = describe(data, league);
+  const og = playerOgImage(data, league);
   return {
     title: { absolute: `${title} | Rupture Report` },
     description,
@@ -77,10 +80,9 @@ export async function playerMetadata({ params, league = "NFL" }: Props): Promise
       siteName: "Rupture Report",
       firstName: data.player.firstName,
       lastName: data.player.lastName,
-      // NBA cards come from a route handler (stable URL); NFL uses the opengraph-image file convention.
-      ...(league === "NBA" ? { images: [{ url: `${canonical}/opengraph-image`, width: 1200, height: 630, alt: `${data.player.fullName} NBA tear & recovery tracker` }] } : {}),
+      images: [og],
     },
-    twitter: { card: "summary_large_image", title, description, ...(league === "NBA" ? { images: [`${canonical}/opengraph-image`] } : {}) },
+    twitter: { card: "summary_large_image", title, description, images: [og.url] },
   };
 }
 
@@ -107,21 +109,6 @@ export default function PlayerPageView({ params, league = "NFL" }: Props) {
       </Suspense>
     </main>
   );
-}
-
-/** Header context from confirmed data only: NFL "Week 7 · @BAL", NBA "Playoffs G4 · @DEN" / "Game · @DEN". Unknowns omitted. */
-function headerContext(i: Injury, league: League): string | null {
-  const isGame = !!(i.stadium || i.opponent);
-  if (!isGame) return null;
-  const opp = i.opponent ? `${i.homeAway === "away" ? "@" : i.homeAway === "home" ? "vs " : "vs "}${i.opponent.abbreviation}` : null;
-  let when: string | null;
-  if (league === "NBA") {
-    const g = i.week ? ` G${i.week}` : "";
-    when = i.phase === "summer_league" ? `Summer League${g}` : i.phase === "preseason" ? "Preseason" : i.phase === "playoffs" ? `Playoffs${g}` : "Game";
-  } else {
-    when = i.phase === "preseason" ? "Preseason" : i.phase === "playoffs" ? "Playoffs" : i.week ? `Week ${i.week}` : "Game";
-  }
-  return [when, opp].filter(Boolean).join(" · ");
 }
 
 function PlayerSkeleton() {
@@ -172,7 +159,7 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
   const summaries = injuries.map((i) => injurySentence(playerInjuryFacts(player, i)));
   const headshot = localImage(player.headshotPath);
   const personImage = headshot ? `${siteUrl}${headshot}` : null;
-  const ogImage = `${url}/opengraph-image`;
+  const ogImage = `${siteUrl}${playerOgImage(data, league).url}`;
   const published = player.createdAt ?? null;
   const conditions = injuries.map((i) => {
     const anatomy = conditionAnatomy(i.injuryType);
@@ -313,8 +300,8 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
         {bio && <p className="mt-1.5 text-sm text-text/60" data-bio>{bio}</p>}
         {injuries[0] && (() => {
           const i0 = injuries[0];
-          const side = i0.bodySide === "left" || i0.bodySide === "right" ? i0.bodySide[0].toUpperCase() + i0.bodySide.slice(1) : null;
-          const ctx = headerContext(i0, league);
+          const side = tearSide(i0);
+          const ctx = tearContext(i0, league);
           const ach = i0.injuryType === "Achilles";
           return (
             <p className="mt-3 flex flex-wrap items-center gap-2 text-sm" data-tear-badge>

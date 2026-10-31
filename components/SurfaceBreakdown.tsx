@@ -53,7 +53,7 @@ export default function SurfaceBreakdown({ rows }: { rows: TrackerRow[] }) {
         </p>
       </div>
 
-      <div className="mt-3 grid grid-cols-[minmax(0,auto)_1fr] gap-x-3 sm:gap-x-4">
+      <div className="relative mt-3 grid grid-cols-[minmax(0,auto)_1fr] gap-x-3 sm:gap-x-4">
         <ul className="text-sm" aria-hidden="true">
           {b.map((x) => (
             <li key={x.key} style={{ height: ROW }} className="flex flex-col justify-center leading-tight">
@@ -62,7 +62,6 @@ export default function SurfaceBreakdown({ rows }: { rows: TrackerRow[] }) {
           ))}
         </ul>
         <svg role="img" aria-label={aria} width="100%" height={ROW * b.length} className="block overflow-visible">
-          <title>{aria}</title>
           {b.map((x, i) => {
             const n = x.acl + x.ach;
             const y = i * ROW + (ROW - BAR) / 2;
@@ -83,6 +82,20 @@ export default function SurfaceBreakdown({ rows }: { rows: TrackerRow[] }) {
             );
           })}
         </svg>
+        {/* Styled tooltip hit areas (hover / keyboard focus / tap), one per row. */}
+        <div className="absolute inset-0">
+          {b.map((x) => (
+            <div
+              key={x.key}
+              tabIndex={0}
+              role="note"
+              aria-label={`${x.label}: ${x.acl + x.ach} (${x.acl} ACL, ${x.ach} Achilles)`}
+              data-tip={`${x.label}: ${x.acl} ACL · ${x.ach} Achilles`}
+              className="rr-tip rr-tip-row"
+              style={{ height: ROW }}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted">

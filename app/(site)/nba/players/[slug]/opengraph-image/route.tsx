@@ -6,6 +6,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   const { slug } = await params;
   if ((await playerSlugExists(slug, "NBA")) === false) return new Response("Not found", { status: 404 });
   const res = await renderPlayerOg(slug, "NBA");
-  res.headers.set("Cache-Control", "public, max-age=300, s-maxage=3600");
+  res.headers.set("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=3600");
   return res;
 }

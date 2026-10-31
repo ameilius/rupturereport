@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import SeasonHub, { HubSkeleton } from "@/components/SeasonHub";
 import { getSeasonInfo, parseSeason } from "@/lib/seasons";
 import { seasonMetadata } from "@/lib/season-meta";
+import { liveLeagueOgVersion } from "@/lib/league-og";
 
 // Archive season hubs. proxy.ts validates the segment first (real 404 / 308 to "/"
 // for the current season); the checks here are a fallback.
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const info = await getSeasonInfo();
     if (season == null || !info.withData.includes(season)) return { title: "Season not found", robots: { index: false } };
-    return seasonMetadata(season, season === info.current);
+    return seasonMetadata(season, season === info.current, "NFL", await liveLeagueOgVersion("NFL"));
   } catch {
     return { title: "Season" };
   }

@@ -47,7 +47,7 @@ export function RecoveryStepper({
             <span
               data-tip={`${t.label} · ${dates[i] ? shortDate(dates[i]!) : done || current ? "date not reported" : "not reached yet"}`}
               aria-hidden="true"
-              className="rr-tip rr-pop relative inline-flex h-6 w-6 shrink-0 cursor-default items-center justify-center rounded-full"
+              className="rr-tip rr-tip-below rr-pop relative inline-flex h-6 w-6 shrink-0 cursor-default items-center justify-center rounded-full"
               style={{ animationDelay: `${i * 160}ms` }}
             >
               {current && (
