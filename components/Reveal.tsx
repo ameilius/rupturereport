@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const SEL = ".rr-grow, .rr-grow-x, .rr-rise, .rr-draw";
+const SEL = ".rr-grow, .rr-grow-x, .rr-rise, .rr-draw, .rr-tile";
 
 /** Starts chart grow-in animations as each element scrolls into view (adds .rr-go). */
 export default function Reveal() {

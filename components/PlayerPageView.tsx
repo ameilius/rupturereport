@@ -254,7 +254,7 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
         }}
       />
       <div style={{ "--tp": tp, "--ts": ts, "--accent": accent } as React.CSSProperties}>
-      <header className="relative mt-6 flex items-center gap-5 overflow-hidden rounded-2xl border border-border p-5 sm:gap-7 sm:p-8"
+      <header className="relative mt-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5 overflow-hidden rounded-2xl border border-border p-5 sm:gap-7 sm:p-8"
         style={{ background: `linear-gradient(115deg, ${tp}cc 0%, ${tp}55 38%, #0B0F14 78%)` }}>
         {teamLogo && (
           // eslint-disable-next-line @next/next/no-img-element

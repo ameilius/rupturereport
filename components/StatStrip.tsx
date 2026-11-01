@@ -79,23 +79,32 @@ function Sparkline({ data, color, title }: { data: number[]; color: string; titl
 }
 
 export default function StatStrip({ stats }: { stats: StatItem[] }) {
+  // Bento: the first stat is the hero tile (display-size number, own surface step);
+  // the rest support it. Tiles rise in reading order, 90ms apart.
   return (
-    <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-      {stats.map((x) => (
-        <div key={x.label} className="glass lift rounded-xl border p-3 sm:p-4">
-          <dt className="text-xs uppercase tracking-wider text-muted">{x.label}</dt>
-          <dd className={`mt-1 flex items-center gap-2 text-2xl font-bold ${x.tone ?? ""}`}>
-            <CountUp value={x.value} num={x.num} suffix={x.suffix} />
-            {x.icon && <InjuryBodyIcon type={x.icon} size={28} decorative />}
-          </dd>
-          {x.sub && <dd className="mt-0.5 text-xs text-muted">{x.sub}</dd>}
-          {x.spark && (
-            <dd>
-              <Sparkline {...x.spark} />
+    <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-[1.6fr_repeat(4,minmax(0,1fr))]">
+      {stats.map((x, i) => {
+        const hero = i === 0;
+        return (
+          <div
+            key={x.label}
+            style={{ animationDelay: `${i * 90}ms` }}
+            className={`rr-tile glass lift flex flex-col rounded-xl border p-3 sm:p-4 ${hero ? "stat-hero col-span-2 lg:col-span-1" : ""}`}
+          >
+            <dt className="text-xs uppercase tracking-wider text-muted">{x.label}</dt>
+            <dd className={`mt-1 flex items-center gap-2 whitespace-nowrap font-bold leading-none ${hero ? "text-5xl sm:text-6xl" : "text-3xl"} ${x.tone ?? ""}`}>
+              <CountUp value={x.value} num={x.num} suffix={x.suffix} />
+              {x.icon && <InjuryBodyIcon type={x.icon} size={hero ? 40 : 28} decorative />}
             </dd>
-          )}
-        </div>
-      ))}
+            {x.sub && <dd className="mt-1.5 text-xs text-muted">{x.sub}</dd>}
+            {x.spark && (
+              <dd className="mt-auto">
+                <Sparkline {...x.spark} />
+              </dd>
+            )}
+          </div>
+        );
+      })}
     </dl>
   );
 }
