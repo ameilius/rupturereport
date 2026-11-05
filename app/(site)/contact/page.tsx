@@ -1,7 +1,8 @@
-import { breadcrumbJsonLd } from "@/lib/structured-data";
+import { breadcrumbJsonLd, X_PROFILE_URL } from "@/lib/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmailLink } from "@/components/EmailLink";
+import XBrandLink from "@/components/XBrandLink";
 import { defaultOgImage } from "@/lib/og";
 
 const siteUrl = "https://rupturereport.com";
@@ -30,6 +31,7 @@ const jsonLd = {
     name: "Rupture Report",
     url: siteUrl,
     email: "contact@rupturereport.com",
+    sameAs: [X_PROFILE_URL],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer support",
@@ -78,6 +80,7 @@ export default function ContactPage() {
         <EmailLink user="contact" domain="rupturereport.com" className="mt-1 inline-block text-xl font-semibold text-teal hover:underline sm:text-2xl" />
         <p className="mt-2 text-sm text-muted">Corrections are reviewed against the source you link; we update the tracker when it checks out.</p>
       </div>
+      <XBrandLink className="mt-4" />
     </main>
   );
 }

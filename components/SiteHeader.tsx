@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import CopyrightYear from "@/components/CopyrightYear";
 import LeagueSwitcher, { MainNavLinks } from "@/components/LeagueSwitcher";
+import XBrandLink from "@/components/XBrandLink";
 import type { League } from "@/lib/leagues";
 
 export function SiteHeader({ league }: { league?: League } = {}) {
@@ -73,6 +74,7 @@ export function SiteFooter() {
             <p className="mt-4 text-sm">
               <Link href="/contact" className="text-teal hover:underline">contact<span>@</span>rupturereport.com</Link>
             </p>
+            <XBrandLink className="mt-3" />
             <p className="mt-4 text-xs leading-relaxed text-muted">
               Team logos and player images © their respective owners.
             </p>
