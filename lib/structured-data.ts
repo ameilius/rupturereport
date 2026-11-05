@@ -3,12 +3,15 @@ export const SITE_URL = "https://rupturereport.com";
 export const SITE_NAME = "Rupture Report";
 export const DATA_LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
 export const TERMS_URL = `${SITE_URL}/terms`;
+/** Official brand account. The only social profile the site links to. */
+export const X_PROFILE_URL = "https://x.com/rupturereports";
 
 export const organizationRef = {
   "@type": "Organization",
   "@id": `${SITE_URL}/#organization`,
   name: SITE_NAME,
   url: SITE_URL,
+  sameAs: [X_PROFILE_URL],
   logo: { "@type": "ImageObject", url: `${SITE_URL}/brand/logo-square-1024.png`, width: 1024, height: 1024 },
 };
 

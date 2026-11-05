@@ -6,7 +6,7 @@ import StatStrip, { type StatItem } from "@/components/StatStrip";
 import SurfaceBreakdown from "@/components/SurfaceBreakdown";
 import PositionBreakdown from "@/components/PositionBreakdown";
 import SeasonSwitcher from "@/components/SeasonSwitcher";
-import { datasetJsonLd, SITE_URL } from "@/lib/structured-data";
+import { datasetJsonLd, SITE_URL, X_PROFILE_URL } from "@/lib/structured-data";
 import { formatDate } from "@/lib/format";
 import { trackerFaq } from "@/lib/summaries";
 import { computeStats, getCarryover, getTrackerRows, weeklySeries, type TrackerRow } from "@/lib/tracker";
@@ -23,6 +23,7 @@ const organizationJsonLd = {
       name: "Rupture Report",
       url: SITE_URL,
       email: "contact@rupturereport.com",
+      sameAs: [X_PROFILE_URL],
       contactPoint: { "@type": "ContactPoint", contactType: "customer support", email: "contact@rupturereport.com", url: `${SITE_URL}/contact` },
       logo: { "@type": "ImageObject", url: `${SITE_URL}/brand/logo-square-1024.png`, width: 1024, height: 1024 },
     },
