@@ -30,6 +30,8 @@ scripts/weekly/check-idempotency.sh db/migrations/00NN_weekly_acl_achilles_2026-
 ```
 Applies the file twice inside one transaction on `rrtest` (rrlocal/rrlocal @127.0.0.1), compares row counts + checksums after each run, then `ROLLBACK`. PASS = second run changed nothing. Refuses non-local hosts. A "first run changed nothing" warning means a lookup (team/stadium/slug) matched nothing locally or it was already applied — check the slugs.
 
+Requires a `mysql` or `mariadb` client (either is fine) and a reachable local test DB with the `players`, `injuries`, and `progress_updates` tables. If the client is missing, the connection fails, or a required table is missing, the script prints a clear error to stderr and exits non-zero. It never skips those failures. This check is not part of CI & Deploy; run it here before shipping a weekly migration.
+
 ## 4. Ship
 ```bash
 scripts/weekly/ship.sh "Weekly ACL & Achilles update 2026-11-03"            # git add -A
