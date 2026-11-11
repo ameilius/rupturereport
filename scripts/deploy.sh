@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# Run on the VPS by /home/rupturereport/app/deploy.sh after `git pull`.
+# Run on the VPS by /usr/local/sbin/rupturereport-deploy (as rupturereport) after `git pull --ff-only`.
 set -euo pipefail
+# Runs as the rupturereport user via /usr/local/sbin/rupturereport-deploy (never as root).
+[ "$(id -u)" -ne 0 ] || { echo "run via /usr/local/sbin/rupturereport-deploy, not as root" >&2; exit 1; }
+export PM2_HOME="${PM2_HOME:-/home/rupturereport/.pm2}"
 APP=/home/rupturereport/app
 cd "$APP"
 
