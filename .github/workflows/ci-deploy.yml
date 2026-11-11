@@ -62,9 +62,14 @@ jobs:
           sleep 10
       - name: Link previews (OG / Twitter cards)
         run: node scripts/audit/og-check.mjs
-      - name: Install Playwright Chromium (CI only, not a project dependency)
+      # Uses the runner's preinstalled Google Chrome, so no apt downloads (Ubuntu mirrors have flaked on runners).
+      - name: Install Playwright library (CI only, not a project dependency)
+        timeout-minutes: 3
         run: |
           mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1
-          npx playwright install --with-deps chromium
-      - name: Overflow + console errors (390 / 1440)
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)
+          [ -n "$CHROME" ] || { echo "FAIL: no preinstalled Chrome on runner" >&2; exit 1; }
+          echo "PW_CHROMIUM=$CHROME" >> "$GITHUB_ENV"; "$CHROME" --version
+      - name: Overflow + status + console errors (390 / 1440)
+        timeout-minutes: 8
         run: NODE_PATH=/tmp/pw/node_modules node scripts/audit/overflow-check.mjs
