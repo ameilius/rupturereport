@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { track } from "@/lib/analytics";
 import type { TrackerRow } from "@/lib/tracker";
 import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
 import { MiniStageBar } from "@/components/RecoveryProgress";
@@ -85,6 +86,19 @@ export default function InjuryTracker({
   const [phase, setPhase] = useState("");
   const [pos, setPos] = useState("");
   const dq = useDeferredValue(q);
+  const lg = league.toLowerCase();
+  /** Wraps a filter setter so each change is sent to GA as filter_use (value "all" when cleared). */
+  const tracked = (name: string, set: (v: string) => void) => (e: React.ChangeEvent<HTMLSelectElement>) => {
+    set(e.target.value);
+    track("filter_use", { filter_name: name, filter_value: e.target.value || "all", league: lg });
+  };
+  // Search box: one `search` event per settled query (not per keystroke).
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) return;
+    const t = setTimeout(() => track("search", { search_term: term.slice(0, 100), league: lg }), 1500);
+    return () => clearTimeout(t);
+  }, [q, lg]);
 
   const teams = useMemo(
     () => [...new Set(rows.map((r) => r.team).filter(Boolean) as string[])].sort(),
@@ -122,20 +136,20 @@ export default function InjuryTracker({
         />
         <div className="grid grid-cols-2 gap-2 sm:flex">
           <label className="sr-only" htmlFor={`${idPrefix}-ft`}>Tear type</label>
-          <select id={`${idPrefix}-ft`} className={sel} value={type} onChange={(e) => setType(e.target.value)}>
+          <select id={`${idPrefix}-ft`} className={sel} value={type} onChange={tracked("injury_type", setType)}>
             <option value="">ACL & Achilles</option>
             <option value="ACL">ACL</option>
             <option value="Achilles">Achilles</option>
           </select>
           <label className="sr-only" htmlFor={`${idPrefix}-fteam`}>Team</label>
-          <select id={`${idPrefix}-fteam`} className={sel} value={team} onChange={(e) => setTeam(e.target.value)}>
+          <select id={`${idPrefix}-fteam`} className={sel} value={team} onChange={tracked("team", setTeam)}>
             <option value="">All teams</option>
             {teams.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
           {nba ? (
             <>
               <label className="sr-only" htmlFor={`${idPrefix}-fpos`}>Position</label>
-              <select id={`${idPrefix}-fpos`} className={sel} value={pos} onChange={(e) => setPos(e.target.value)}>
+              <select id={`${idPrefix}-fpos`} className={sel} value={pos} onChange={tracked("position", setPos)}>
                 <option value="">All positions</option>
                 {POSITION_BUCKETS.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
@@ -143,7 +157,7 @@ export default function InjuryTracker({
           ) : (
             <>
               <label className="sr-only" htmlFor={`${idPrefix}-fs`}>Surface</label>
-              <select id={`${idPrefix}-fs`} className={sel} value={surface} onChange={(e) => setSurface(e.target.value)}>
+              <select id={`${idPrefix}-fs`} className={sel} value={surface} onChange={tracked("surface", setSurface)}>
                 <option value="">All surfaces</option>
                 <option value="artificial">Artificial</option>
                 <option value="natural">Natural</option>
@@ -151,7 +165,7 @@ export default function InjuryTracker({
                 <option value="practice">Practice (no game)</option>
               </select>
               <label className="sr-only" htmlFor={`${idPrefix}-fp`}>Phase</label>
-              <select id={`${idPrefix}-fp`} className={sel} value={phase} onChange={(e) => setPhase(e.target.value)}>
+              <select id={`${idPrefix}-fp`} className={sel} value={phase} onChange={tracked("phase", setPhase)}>
                 <option value="">All phases</option>
                 <option value="preseason">Offseason / preseason</option>
                 <option value="regular">Regular season</option>
@@ -166,7 +180,7 @@ export default function InjuryTracker({
             <button
               type="button"
               className="ml-3 text-teal hover:underline"
-              onClick={() => { setQ(""); setType(""); setTeam(""); setSurface(""); setPhase(""); setPos(""); }}
+              onClick={() => { setQ(""); setType(""); setTeam(""); setSurface(""); setPhase(""); setPos(""); track("filter_use", { filter_name: "clear_all", filter_value: "all", league: lg }); }}
             >
               Clear
             </button>

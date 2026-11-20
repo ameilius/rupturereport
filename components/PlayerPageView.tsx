@@ -2,6 +2,7 @@ import { Shim } from "@/components/Shim";
 import type { Metadata } from "next";
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
+import TrackEvent from "@/components/TrackEvent";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -320,6 +321,15 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
               <time dateTime={lastModified}>{formatDate(lastModified)}</time>
             </p>
           )}
+          <TrackEvent
+            name="view_player"
+            params={{
+              league: league.toLowerCase(),
+              player_slug: player.slug,
+              injury_type: injuries[0]?.injuryType ?? undefined,
+              team: player.team?.abbreviation ?? undefined,
+            }}
+          />
           <ShareButton
             url={url}
             title={`${player.fullName} ${shareType} Recovery Tracker | Rupture Report`}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { contentTypeFromPath, leagueParam, track } from "@/lib/analytics";
 
 type Props = { url: string; title: string; text?: string; className?: string; compact?: boolean };
 
@@ -82,10 +83,21 @@ export default function ShareButton({ url, title, text, className = "", compact 
     return () => clearTimeout(t);
   }, [copied]);
 
+  function sent(method: string) {
+    let path = url;
+    try {
+      path = new URL(url, location.href).pathname;
+    } catch {
+      /* keep raw */
+    }
+    track("share", { method, content_type: contentTypeFromPath(path), item_id: path, league: leagueParam(path) });
+  }
+
   async function onClick() {
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share({ title, text: shareText, url });
+        sent("native");
         return;
       } catch (err) {
         if ((err as DOMException)?.name === "AbortError") return;
@@ -107,21 +119,22 @@ export default function ShareButton({ url, title, text, className = "", compact 
       ta.remove();
     }
     setCopied(true);
+    sent("copy_link");
   }
 
   const u = encodeURIComponent(url);
   const t = encodeURIComponent(shareText);
   const links = [
-    { name: "X (Twitter)", icon: Icons.x, href: `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
-    { name: "Facebook", icon: Icons.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${u}` },
-    { name: "LinkedIn", icon: Icons.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
-    { name: "Reddit", icon: Icons.reddit, href: `https://www.reddit.com/submit?url=${u}&title=${encodeURIComponent(title)}` },
+    { name: "X (Twitter)", method: "x", icon: Icons.x, href: `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
+    { name: "Facebook", method: "facebook", icon: Icons.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+    { name: "LinkedIn", method: "linkedin", icon: Icons.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
+    { name: "Reddit", method: "reddit", icon: Icons.reddit, href: `https://www.reddit.com/submit?url=${u}&title=${encodeURIComponent(title)}` },
   ];
   const item =
     "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-border/60 focus:bg-border/60 focus:outline-none";
 
   return (
-    <div ref={wrap} className={`relative inline-block ${className}`}>
+    <div ref={wrap} data-ga-share="" className={`relative inline-block ${className}`}>
       <button
         ref={btn}
         type="button"
@@ -155,7 +168,10 @@ export default function ShareButton({ url, title, text, className = "", compact 
               target="_blank"
               rel="noopener noreferrer"
               className={item}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                sent(l.method);
+                setOpen(false);
+              }}
               aria-label={`Share on ${l.name}`}
             >
               <span className="text-muted">{l.icon}</span>
@@ -166,7 +182,10 @@ export default function ShareButton({ url, title, text, className = "", compact 
             role="menuitem"
             href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${shareText}\n\n${url}`)}`}
             className={item}
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              sent("email");
+              setOpen(false);
+            }}
             aria-label="Share by email"
           >
             <span className="text-muted">{Icons.mail}</span>

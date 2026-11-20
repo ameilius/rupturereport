@@ -5,6 +5,7 @@ import { cfg, homePath, playerPath, statsPath, type League } from "@/lib/leagues
 import { breadcrumbJsonLd, datasetJsonLd, SITE_URL } from "@/lib/structured-data";
 import { formatDate } from "@/lib/format";
 import { CountUp } from "@/components/StatStrip";
+import TrackEvent from "@/components/TrackEvent";
 
 const TEAL = "#14B8A6";
 const AMB = "#F59E0B";
@@ -155,6 +156,7 @@ export default async function StatsPage({ league }: { league: League }) {
 
   return (
     <>
+      <TrackEvent name="view_stats" params={{ league: league.toLowerCase(), season: String(s.season) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={ld({ "@context": "https://schema.org", ...dataset })} />
       <script type="application/ld+json" dangerouslySetInnerHTML={ld(crumbs)} />
       <header className="hero relative isolate pb-2">
