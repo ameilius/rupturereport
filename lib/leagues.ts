@@ -20,6 +20,8 @@ export interface LeagueConfig {
   hasSurface: boolean;
   /** settings key holding the current season year. */
   settingKey: string;
+  /** settings key holding the first fully tracked season. Earlier seasons hold only carryovers (see isCarryoverOnly). */
+  trackingStartKey: string;
   /** Plural noun for the people ("players" in both, kept for copy variation). */
   teamNoun: string;
   /** Where a returned player is back ("field" vs "court"). */
@@ -45,6 +47,7 @@ export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
     venueWord: "Stadium",
     hasSurface: true,
     settingKey: "current_season",
+    trackingStartKey: "tracking_start_season",
     teamNoun: "team",
     returnPlace: "field",
     positionGroups: [
@@ -69,6 +72,7 @@ export const LEAGUE_CONFIG: Record<League, LeagueConfig> = {
     venueWord: "Arena",
     hasSurface: false,
     settingKey: "current_season_nba",
+    trackingStartKey: "tracking_start_season_nba",
     teamNoun: "team",
     returnPlace: "court",
     positionGroups: [

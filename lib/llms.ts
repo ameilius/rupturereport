@@ -2,7 +2,7 @@ import { formatDate } from "@/lib/format";
 import { injurySentence, trackerFaq, trackerRowFacts } from "@/lib/summaries";
 import { DATA_LICENSE_URL, SITE_NAME, SITE_URL, TERMS_URL } from "@/lib/structured-data";
 import { computeStats, getCarryover, getTrackerRows } from "@/lib/tracker";
-import { getSeasonInfo } from "@/lib/seasons";
+import { getSeasonInfo, isCarryoverOnly } from "@/lib/seasons";
 import { LEAGUE_CONFIG, playerPath, seasonLabel, type League } from "@/lib/leagues";
 
 interface LeagueData {
@@ -71,14 +71,23 @@ export async function buildLlmsTxt(full: boolean): Promise<string> {
   L.push("## Key pages", "");
   L.push(`- [NFL tear tracker, ${nfl.label} season](${SITE_URL}/): current season table, summary stats, surface breakdown and FAQ`);
   for (const y of nfl.info.withData.filter((y) => y !== nfl.info.current)) {
-    L.push(`- [NFL ${y} season archive](${SITE_URL}/${y}): every tracked ${y} tear with stats and FAQ`);
+    L.push(
+      isCarryoverOnly(nfl.info, y)
+        ? `- [NFL ${y} tears still recovering in ${nfl.info.trackedFrom}](${SITE_URL}/${y}): ${y}-season tears whose players were still recovering going into ${nfl.info.trackedFrom} (not a complete list of ${y} tears)`
+        : `- [NFL ${y} season archive](${SITE_URL}/${y}): every tracked ${y} tear with stats and FAQ`,
+    );
   }
   L.push(`- [All NFL players](${SITE_URL}/players): index of every tracked NFL player`);
   L.push(`- [NFL tear stats, ${nfl.label} season](${SITE_URL}/stats): charts and breakdowns (tears per week, games vs practice, turf vs grass, mechanism, positions, teams, recovery stage, days to surgery)`);
   L.push(`- [NBA tear tracker, ${nba.label} season](${SITE_URL}/nba): current season table, summary stats, tears by position and FAQ`);
   for (const y of nba.info.withData.filter((y) => y !== nba.info.current)) {
     const l = seasonLabel("NBA", y);
-    L.push(`- [NBA ${l} season archive](${SITE_URL}/nba/${l}): every tracked ${l} tear with stats and FAQ`);
+    const from = seasonLabel("NBA", nba.info.trackedFrom);
+    L.push(
+      isCarryoverOnly(nba.info, y)
+        ? `- [NBA ${l} tears still recovering in ${from}](${SITE_URL}/nba/${l}): ${l}-season tears whose players were still recovering going into ${from} (not a complete list of ${l} tears)`
+        : `- [NBA ${l} season archive](${SITE_URL}/nba/${l}): every tracked ${l} tear with stats and FAQ`,
+    );
   }
   L.push(`- [All NBA players](${SITE_URL}/nba/players): index of every tracked NBA player`);
   L.push(`- [NBA tear stats, ${nba.label} season](${SITE_URL}/nba/stats): charts and breakdowns (tears per month, games vs practice, mechanism, positions, teams, recovery stage, days to surgery)`);

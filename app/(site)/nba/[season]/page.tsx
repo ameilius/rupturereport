@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
 import SeasonHub, { HubSkeleton } from "@/components/SeasonHub";
-import { getSeasonInfo } from "@/lib/seasons";
+import { getSeasonInfo, isCarryoverOnly } from "@/lib/seasons";
 import { parseSeasonSegment } from "@/lib/leagues";
 import { seasonMetadata } from "@/lib/season-meta";
 import { liveLeagueOgVersion } from "@/lib/league-og";
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const info = await getSeasonInfo("NBA");
     if (season == null || !info.withData.includes(season)) return { title: "Season not found", robots: { index: false } };
-    return seasonMetadata(season, season === info.current, "NBA", await liveLeagueOgVersion("NBA"));
+    return seasonMetadata(season, season === info.current, "NBA", await liveLeagueOgVersion("NBA"), isCarryoverOnly(info, season) ? { trackedFrom: info.trackedFrom } : null);
   } catch {
     return { title: "Season" };
   }

@@ -7,6 +7,7 @@ NFL ACL &amp; Achilles injury progress tracker — rupturereport.com
 - The current season comes from `settings.current_season` (Admin → Settings, migration 0005), falling back to the latest season with data, then the calendar year.
 - `/` always shows the **current** season. `/{season}` is an archive page for past seasons with data; `/{current season}` **308-redirects to `/`** so each season has exactly one URL (canonical `/` for the current season, `/{season}` for archives). Anything else at one path segment returns the themed 404 (handled in `proxy.ts` so the status is a real 404).
 - Season totals count only tears with that season. Earlier-season tears whose latest stage isn't `returned` are listed under "Still recovering from previous seasons" and are never added to the totals. Progress updates always belong to the original injury, whatever their date.
+- Seasons before the first fully tracked season (`settings.tracking_start_season` / `tracking_start_season_nba`, default: the current season) hold only carryovers. Their archive pages (e.g. `/2025`, `/nba/2025-26`) are worded as "still recovering in {first tracked season}", not as a full season (`isCarryoverOnly` in `lib/seasons.ts`).
 
 ## Terminology
 

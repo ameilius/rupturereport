@@ -10,7 +10,7 @@ import { datasetJsonLd, SITE_URL, X_PROFILE_URL } from "@/lib/structured-data";
 import { formatDate } from "@/lib/format";
 import { trackerFaq } from "@/lib/summaries";
 import { computeStats, getCarryover, getTrackerRows, weeklySeries, type TrackerRow } from "@/lib/tracker";
-import { LEAGUE, type SeasonInfo } from "@/lib/seasons";
+import { LEAGUE, isCarryoverOnly, type SeasonInfo } from "@/lib/seasons";
 import { seasonCopy } from "@/lib/season-meta";
 import { LEAGUE_CONFIG, homePath, playersPath, seasonLabel, type League } from "@/lib/leagues";
 
@@ -46,7 +46,10 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
   const isCurrent = season === info.current;
   const nba = league === "NBA";
   const label = seasonLabel(league, season);
-  const { title: pageTitle, description, path } = seasonCopy(season, isCurrent, league);
+  // Carryover-only archive (season before the first fully tracked one): same layout, copy says it is not the full season.
+  const carryOnly = isCarryoverOnly(info, season);
+  const fromLabel = seasonLabel(league, info.trackedFrom);
+  const { title: pageTitle, description, path } = seasonCopy(season, isCurrent, league, carryOnly ? { trackedFrom: info.trackedFrom } : null);
   const pageUrl = `${SITE_URL}${path === "/" ? "" : path}`;
   let rows: TrackerRow[] = [];
   let carry: Awaited<ReturnType<typeof getCarryover>> | null = null;
@@ -79,15 +82,23 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
       <h1 className="mt-3 text-balance text-3xl font-bold tracking-tight sm:text-5xl">
         {isCurrent ? <>{league} </> : <>{label} {league} </>}
         <span className={grad}>ACL</span> &amp; <span className={grad}>Achilles</span>{" "}
-        {isCurrent ? "Tear Tracker" : "Tears"}
+        {isCurrent ? "Tear Tracker" : carryOnly ? <>Tears: Still Recovering in {fromLabel}</> : "Tears"}
       </h1>
       <p className="mt-3 text-muted">
-        Every torn ACL and Achilles of the {label} season, with {nba ? "" : "surface, "}game context and recovery status.{" "}
+        {carryOnly ? (
+          <>
+            {league} players who tore an ACL or Achilles during the {label} season and were still recovering going into the {fromLabel}{" "}
+            season, with {nba ? "" : "surface, "}game context and recovery status. Not a complete list of {label} tears: full-season
+            tracking starts in {fromLabel}.{" "}
+          </>
+        ) : (
+          <>Every torn ACL and Achilles of the {label} season, with {nba ? "" : "surface, "}game context and recovery status.{" "}</>
+        )}
         <Link href={playersPath(league)} className="text-teal hover:underline">All players →</Link>
       </p>
       {!isCurrent && (
         <p className="mt-3 text-sm text-muted">
-          Archive season.{" "}
+          {carryOnly ? "Carryover list, not a full-season archive." : "Archive season."}{" "}
           <Link href={homePath(league)} className="text-teal hover:underline">Go to the current {seasonLabel(league, info.current)} season →</Link>
         </p>
       )}
@@ -112,8 +123,10 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
   );
   const dataset = datasetJsonLd({
     id: `${pageUrl || SITE_URL}/#dataset-${season}`,
-    name: `${league} ACL & Achilles Tears, ${label} Season`,
-    description: nba
+    name: carryOnly ? `${league} ACL & Achilles Tears Still Recovering in ${fromLabel}, From the ${label} Season` : `${league} ACL & Achilles Tears, ${label} Season`,
+    description: carryOnly
+      ? `Torn ACL and Achilles tears from the ${label} ${league} season whose players were still recovering going into the ${fromLabel} season (carryovers only, not a complete list of ${label} tears), including tear date, team, position, game context, ${nba ? "" : "playing surface, "}mechanism and recovery stage.`
+      : nba
       ? `Tracked torn ACL and Achilles tears in the ${label} NBA season (Summer League, offseason, preseason, regular season and playoffs), including tear date, team, position, game context, mechanism and recovery stage.`
       : `Tracked torn ACL and Achilles tears in the ${season} ${LEAGUE} season (offseason, preseason and regular season), including tear date, team, position, game context, playing surface, mechanism and recovery stage.`,
     url: pageUrl || SITE_URL,
@@ -125,7 +138,7 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
       : [`${LEAGUE} ACL tears ${season}`, `${LEAGUE} Achilles tears ${season}`, "torn ACL", "torn Achilles", "artificial turf", "natural grass", "recovery"],
     ...(nba ? { playingSurface: false, spatialCoverage: "United States and Canada" } : {}),
   });
-  const faq = trackerFaq(rows, league, label);
+  const faq = trackerFaq(rows, league, label, carryOnly ? { fromLabel, returnPlace: LEAGUE_CONFIG[league].returnPlace } : undefined);
   const teams = new Set(rows.map((r) => r.team).filter(Boolean)).size;
   const faqLd = {
     "@context": "https://schema.org",
@@ -137,7 +150,7 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
   const wk = weeklySeries(rows, isCurrent ? new Date() : new Date(0));
   const span = wk ? `per week since ${formatDate(wk.start)}` : "";
   const stats: StatItem[] = [
-    { label: "Tracked tears", value: String(s.total), num: s.total, spark: wk ? { data: wk.total, color: "#E6EDF3", title: `All tears ${span}` } : undefined },
+    { label: carryOnly ? "Carryover tears" : "Tracked tears", value: String(s.total), num: s.total, spark: wk ? { data: wk.total, color: "#E6EDF3", title: `All tears ${span}` } : undefined },
     { label: "ACL", value: String(s.acl), num: s.acl, tone: "text-teal", icon: "ACL", spark: wk ? { data: wk.acl, color: "#14B8A6", title: `ACL tears ${span}` } : undefined },
     { label: "Achilles", value: String(s.achilles), num: s.achilles, tone: "text-amber", icon: "Achilles", spark: wk ? { data: wk.achilles, color: "#F59E0B", title: `Achilles tears ${span}` } : undefined },
     nba
@@ -174,8 +187,18 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
         updated: lastModified,
       })}
       <p className="sr-only" data-summary>
-        Rupture Report tracks {s.total} torn ACL and Achilles tear{s.total === 1 ? "" : "s"} in the {label} {league} season:{" "}
-        {s.acl} ACL and {s.achilles} Achilles across {teams} team{teams === 1 ? "" : "s"}.
+        {carryOnly ? (
+          <>
+            Rupture Report lists {s.total} torn ACL and Achilles tear{s.total === 1 ? "" : "s"} from the {label} {league} season whose{" "}
+            {s.total === 1 ? "player was" : "players were"} still recovering going into the {fromLabel} season: {s.acl} ACL and {s.achilles}{" "}
+            Achilles across {teams} team{teams === 1 ? "" : "s"}. This is not a complete count of {label} tears.
+          </>
+        ) : (
+          <>
+            Rupture Report tracks {s.total} torn ACL and Achilles tear{s.total === 1 ? "" : "s"} in the {label} {league} season:{" "}
+            {s.acl} ACL and {s.achilles} Achilles across {teams} team{teams === 1 ? "" : "s"}.
+          </>
+        )}
         {carry.prevPlayers > 0 && (
           <> {carry.prevReturnedPlayers} of {carry.prevPlayers} players from the {seasonLabel(league, carry.prevSeason)} season are back on the {LEAGUE_CONFIG[league].returnPlace}.</>
         )}
@@ -185,7 +208,12 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
       </p>
       <StatStrip stats={stats} />
       {nba ? <PositionBreakdown rows={rows} /> : <SurfaceBreakdown rows={rows} />}
-      <InjuryTracker rows={rows} heading={`${label} season tears`} empty={`No tears tracked for the ${label} season yet.`} league={league} />
+      <InjuryTracker
+        rows={rows}
+        heading={carryOnly ? `${label} tears still recovering in ${fromLabel}` : `${label} season tears`}
+        empty={carryOnly ? `No ${label} carryover tears tracked.` : `No tears tracked for the ${label} season yet.`}
+        league={league}
+      />
       {showCarry && (
         <section aria-labelledby="carryover-heading" className="mt-12">
           <div className="flex flex-wrap items-end justify-between gap-3">

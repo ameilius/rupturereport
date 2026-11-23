@@ -16,6 +16,17 @@ export interface SeasonInfo {
   withData: number[];
   /** Seasons shown in the switcher: withData plus the current season, newest first. */
   listed: number[];
+  /**
+   * First fully tracked season (settings[trackingStartKey]; falls back to the current season).
+   * Seasons before it only hold carryovers: tears added because the player was still recovering
+   * into a later season, so they are not a complete list of that season's tears.
+   */
+  trackedFrom: number;
+}
+
+/** True for an archive season that only holds carryover tears (never the current season). */
+export function isCarryoverOnly(info: SeasonInfo, season: number): boolean {
+  return season !== info.current && season < info.trackedFrom;
 }
 
 const TTL = 30_000;
@@ -40,15 +51,19 @@ async function load(league: League): Promise<SeasonInfo> {
   );
   const withData = rows.map((r) => Number(r.season)).filter((n) => Number.isInteger(n));
   let setting: number | null = null;
+  let start: number | null = null;
   try {
-    const [s] = await pool.query<RowDataPacket[]>("SELECT v FROM settings WHERE k = ? LIMIT 1", [cfg(league).settingKey]);
-    setting = parseSeason(s[0]?.v);
+    const [s] = await pool.query<RowDataPacket[]>("SELECT k, v FROM settings WHERE k IN (?, ?)", [cfg(league).settingKey, cfg(league).trackingStartKey]);
+    for (const r of s) {
+      if (r.k === cfg(league).settingKey) setting = parseSeason(r.v);
+      if (r.k === cfg(league).trackingStartKey) start = parseSeason(r.v);
+    }
   } catch {
     setting = null; // settings table not migrated yet
   }
   const current = setting ?? withData[0] ?? new Date().getUTCFullYear();
   const listed = [...new Set([current, ...withData])].sort((a, b) => b - a);
-  return { current, withData, listed };
+  return { current, withData, listed, trackedFrom: start ?? current };
 }
 
 export async function getSeasonInfo(league: League = "NFL"): Promise<SeasonInfo> {

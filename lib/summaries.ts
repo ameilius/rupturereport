@@ -98,7 +98,13 @@ export function trackerRowFacts(r: TrackerRow, league: "NFL" | "NBA" = "NFL"): I
 }
 
 /** Live FAQ (question + plain answer) computed from tracker rows. */
-export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
+export function trackerFaq(
+  rows: TrackerRow[],
+  league: string,
+  season: string,
+  carryover?: { fromLabel: string; returnPlace: string },
+) {
+  if (carryover) return carryoverFaq(rows, league, season, carryover);
   const nba = league === "NBA";
   const when = nba ? "Summer League, offseason, preseason and regular season" : "offseason, preseason and regular season";
   const acl = rows.filter((r) => r.injuryType === "ACL");
@@ -162,6 +168,33 @@ export function trackerFaq(rows: TrackerRow[], league: string, season: string) {
     faq.push({
       q: `What is the most recent ACL or Achilles tear of the ${season} ${league} season?`,
       a: injurySentence(trackerRowFacts(latest, nba ? "NBA" : "NFL")),
+    });
+  }
+  return faq;
+}
+
+/** FAQ for a carryover-only archive season: says plainly it is not the full season's tears. */
+function carryoverFaq(rows: TrackerRow[], league: string, season: string, c: { fromLabel: string; returnPlace: string }) {
+  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const acl = rows.filter((r) => r.injuryType === "ACL").length;
+  const ach = rows.filter((r) => r.injuryType === "Achilles").length;
+  const faq: { q: string; a: string }[] = [
+    {
+      q: `Does this page list every ACL and Achilles tear of the ${season} ${league} season?`,
+      a: `No. Rupture Report's full-season ${league} tracking starts with the ${c.fromLabel} season. This page lists only ${plural(rows.length, "tear")} from the ${season} season (${acl} ACL and ${ach} Achilles) whose ${rows.length === 1 ? "player was" : "players were"} still recovering going into ${c.fromLabel}.`,
+    },
+  ];
+  if (rows.length) {
+    const who = rows.map((r) => `${r.name} (${[r.teamName, r.injuryType, stageLabel(r.stage)].filter(Boolean).join(", ")})`);
+    faq.push({
+      q: `Which ${season} ${league} players were still recovering from an ACL or Achilles tear going into ${c.fromLabel}?`,
+      a: `${who.join("; ")}.`,
+    });
+    const players = new Set(rows.map((r) => r.slug));
+    const back = new Set(rows.filter((r) => r.stage === "returned").map((r) => r.slug)).size;
+    faq.push({
+      q: `How many of these ${season} ${league} players are back on the ${c.returnPlace}?`,
+      a: `${back} of ${plural(players.size, "player")} listed here ${back === 1 ? "has" : "have"} returned to game action.`,
     });
   }
   return faq;

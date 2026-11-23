@@ -34,7 +34,7 @@ async function CurrentSeason() {
     info = await getSeasonInfo("NBA");
   } catch {
     const y = new Date().getUTCFullYear();
-    info = { current: y, withData: [], listed: [y] };
+    info = { current: y, withData: [], listed: [y], trackedFrom: y };
   }
   return <SeasonHub season={info.current} info={info} league="NBA" />;
 }

@@ -3,8 +3,26 @@ import { leagueOgImage } from "@/lib/og";
 import { LEAGUE } from "@/lib/seasons";
 import { seasonHubPath, seasonLabel, type League } from "@/lib/leagues";
 
+/**
+ * Carryover-only archive: a season before the first fully tracked season (see isCarryoverOnly). Its page lists only
+ * tears whose players were still recovering going into `trackedFrom`, so the copy must not read as a full season.
+ */
+export interface CarryoverCopy {
+  trackedFrom: number;
+}
+
 /** Title/description/canonical/OG for a season hub. The current season's canonical is the league home ("/" or "/nba"). */
-export function seasonCopy(season: number, isCurrent: boolean, league: League = "NFL") {
+export function seasonCopy(season: number, isCurrent: boolean, league: League = "NFL", carryover?: CarryoverCopy | null) {
+  if (carryover && !isCurrent) {
+    const label = seasonLabel(league, season);
+    const from = seasonLabel(league, carryover.trackedFrom);
+    const details = league === "NBA" ? "injury date, team, position, game context" : "injury date, team, game, turf vs grass";
+    return {
+      title: `${label} ${league} ACL & Achilles Tears: Still Recovering in ${from}`,
+      description: `${league} players who tore an ACL or Achilles in the ${label} season and were still recovering going into the ${from} season: ${details} and recovery stage. Not a complete list of ${label} tears.`,
+      path: seasonHubPath(league, season, season + 1), // never the current season
+    };
+  }
   if (league === "NBA") {
     const label = seasonLabel("NBA", season);
     return {
@@ -24,8 +42,14 @@ export function seasonCopy(season: number, isCurrent: boolean, league: League = 
 }
 
 /** `ogVersion`: ?v= for the league card (see liveLeagueOgVersion), so shares never show stale counts. */
-export function seasonMetadata(season: number, isCurrent: boolean, league: League = "NFL", ogVersion?: string | null): Metadata {
-  const { title, description, path } = seasonCopy(season, isCurrent, league);
+export function seasonMetadata(
+  season: number,
+  isCurrent: boolean,
+  league: League = "NFL",
+  ogVersion?: string | null,
+  carryover?: CarryoverCopy | null,
+): Metadata {
+  const { title, description, path } = seasonCopy(season, isCurrent, league, carryover);
   const img = leagueOgImage(league, ogVersion);
   const label = seasonLabel(league, season);
   return {
