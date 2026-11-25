@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { leagueOgImage } from "@/lib/og";
+import { brandedTitle } from "@/lib/player-seo";
 import { LEAGUE } from "@/lib/seasons";
 import { seasonHubPath, seasonLabel, type League } from "@/lib/leagues";
 
@@ -12,7 +13,22 @@ export interface CarryoverCopy {
 }
 
 /** Title/description/canonical/OG for a season hub. The current season's canonical is the league home ("/" or "/nba"). */
-export function seasonCopy(season: number, isCurrent: boolean, league: League = "NFL", carryover?: CarryoverCopy | null) {
+/** Live current-season counts for the hub description; omitted when unavailable. */
+export interface HubCounts {
+  acl: number;
+  achilles: number;
+}
+
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+
+export function seasonCopy(
+  season: number,
+  isCurrent: boolean,
+  league: League = "NFL",
+  carryover?: CarryoverCopy | null,
+  counts?: HubCounts | null,
+) {
+  const so = isCurrent && counts ? `: ${counts.acl} ACL and ${plural(counts.achilles, "Achilles tear")} so far,` : ",";
   if (carryover && !isCurrent) {
     const label = seasonLabel(league, season);
     const from = seasonLabel(league, carryover.trackedFrom);
@@ -27,16 +43,20 @@ export function seasonCopy(season: number, isCurrent: boolean, league: League = 
     const label = seasonLabel("NBA", season);
     return {
       title: isCurrent
-        ? `NBA ACL & Achilles Tear Tracker: ${label} Season`
+        ? `NBA ACL & Achilles Tears ${label}: Injured Players List`
         : `${label} NBA ACL & Achilles Tears: Season Archive`,
-      description: `Every torn ACL and Achilles of the ${label} NBA season: dates, teams, positions, game context, mechanism and recovery stage for each player.`,
+      description: isCurrent
+        ? `Every NBA player with a torn ACL or Achilles in the ${label} season${so} with dates, teams, game context and recovery stage.`
+        : `Every torn ACL and Achilles of the ${label} NBA season: dates, teams, positions, game context, mechanism and recovery stage for each player.`,
       path: seasonHubPath("NBA", season, isCurrent ? season : season + 1),
     };
   }
   const title = isCurrent
-    ? `${LEAGUE} ACL & Achilles Tear Tracker: ${season} Season`
+    ? `${LEAGUE} ACL & Achilles Injuries ${season}: Tear List & Tracker`
     : `${season} ${LEAGUE} ACL & Achilles Tears: Season Archive`;
-  const description = `Every torn ACL and Achilles of the ${season} ${LEAGUE} season: dates, teams, turf vs grass, mechanism and recovery stage for each player.`;
+  const description = isCurrent
+    ? `Every ${LEAGUE} player with a torn ACL or Achilles in the ${season} season${so} with dates, teams, turf vs grass and recovery stage.`
+    : `Every torn ACL and Achilles of the ${season} ${LEAGUE} season: dates, teams, turf vs grass, mechanism and recovery stage for each player.`;
   const path = isCurrent ? "/" : `/${season}`;
   return { title, description, path };
 }
@@ -48,18 +68,20 @@ export function seasonMetadata(
   league: League = "NFL",
   ogVersion?: string | null,
   carryover?: CarryoverCopy | null,
+  counts?: HubCounts | null,
 ): Metadata {
-  const { title, description, path } = seasonCopy(season, isCurrent, league, carryover);
+  const { title, description, path } = seasonCopy(season, isCurrent, league, carryover, counts);
   const img = leagueOgImage(league, ogVersion);
   const label = seasonLabel(league, season);
   return {
-    title: { absolute: `${title} | Rupture Report` },
+    title: { absolute: brandedTitle(title) },
     description,
     alternates: { canonical: path },
     keywords:
       league === "NBA"
         ? [
             `NBA ACL tears ${label}`,
+            "ACL injury NBA players list",
             `NBA Achilles tears ${label}`,
             "torn ACL NBA",
             "torn Achilles NBA",
@@ -67,6 +89,7 @@ export function seasonMetadata(
           ]
         : [
             `${LEAGUE} ACL tears ${season}`,
+            `${LEAGUE} ACL injuries ${season}`,
             `${LEAGUE} Achilles tears ${season}`,
             `torn ACL ${LEAGUE}`,
             `torn Achilles ${LEAGUE}`,

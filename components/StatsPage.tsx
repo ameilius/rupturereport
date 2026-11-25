@@ -344,6 +344,19 @@ export default async function StatsPage({ league }: { league: League }) {
           </div>
         </section>
 
+        {s.players.length > 0 && (
+          <section className="st-card st-c12" aria-labelledby="stats-players">
+            <h2 id="stats-players" className="st-h2">Players in these stats</h2>
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+              {s.players.map((p) => (
+                <li key={p.slug}>
+                  <Link className="st-pl" href={playerPath(league, p.slug)}>{p.name} {p.type} tear</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="st-c12 st-ghost">
           <div className="text-xs font-bold uppercase tracking-[.12em]">Year-over-year — coming when past seasons are added</div>
           <div className="mt-1 text-xs">Season-to-season comparisons will appear here once earlier seasons are in the database. No numbers are shown until then.</div>

@@ -11,9 +11,11 @@ import { bioLine, formatDate, humanize } from "@/lib/format";
 import {
   STAGE_LABELS,
   formatInjuryType,
+  getInjuredPlayersList,
   getPlayerBySlug,
   type Injury,
   type PlayerDetail,
+  type PlayerListItem,
 } from "@/lib/players";
 import { contrast, localImage, teamColors } from "@/lib/images";
 import { RecoveryStepper } from "@/components/RecoveryProgress";
@@ -24,6 +26,9 @@ import { playerOgImage } from "@/lib/og";
 import { organizationRef } from "@/lib/structured-data";
 import { cfg, homePath, playerPath, playersPath, seasonLabel, type League } from "@/lib/leagues";
 import { conditionAnatomy, conditionName, injurySentence, playerInjuryFacts } from "@/lib/summaries";
+import { playerFaq, playerSeoDescription, playerSeoTitle } from "@/lib/player-seo";
+import { getSeasonInfo } from "@/lib/seasons";
+import RelatedPlayers from "@/components/RelatedPlayers";
 
 const siteUrl = "https://rupturereport.com";
 
@@ -34,25 +39,9 @@ async function loadPlayer(slug: string, league: League): Promise<PlayerDetail | 
   return getPlayerBySlug(slug, league);
 }
 
-function describe(d: PlayerDetail, league: League): { title: string; description: string } {
-  const nba = league === "NBA";
-  const { player, injuries } = d;
-  const injury = injuries[0];
-  const type = injury ? formatInjuryType(injury.injuryType) : "Major";
-  const title = `${player.fullName} ${nba ? "NBA " : ""}${type} Tear & Recovery Tracker`;
-  const teamBit = player.team ? ` (${player.team.name})` : "";
-  const latest = injury?.updates.at(-1);
-  const stageBit = latest
-    ? ` Current stage: ${STAGE_LABELS[latest.stage]}.`
-    : "";
-  const dateBit = injury?.injuryDate
-    ? ` suffered on ${formatDate(injury.injuryDate)}`
-    : "";
-  const earlier = injuries.length - 1;
-  const earlierBit = earlier > 0 ? ` Includes ${earlier} earlier tear${earlier === 1 ? "" : "s"} (${injuries.slice(1).map((i) => `${formatInjuryType(i.injuryType)}, ${seasonLabel(league, i.season ?? 0)} season`).join("; ")}).` : "";
-  const bio = bioLine(player);
-  const description = `${player.fullName}${teamBit} ${type} tear${dateBit}: ${nba ? "recovery timeline, surgery, return-to-play updates and arena details." : "recovery timeline, surgery, return-to-play updates, stadium and turf details."}${stageBit}${earlierBit}${bio ? ` Bio: ${bio}.` : ""}`;
-  return { title, description };
+function describe(d: PlayerDetail, league: League): { title: string; documentTitle: string; description: string } {
+  const { title, documentTitle } = playerSeoTitle(d);
+  return { title, documentTitle, description: playerSeoDescription(d, league) };
 }
 
 export async function playerMetadata({ params, league = "NFL" }: Props): Promise<Metadata> {
@@ -67,10 +56,10 @@ export async function playerMetadata({ params, league = "NFL" }: Props): Promise
   if (!data) {
     return { title: "Player not found", robots: { index: false } };
   }
-  const { title, description } = describe(data, league);
+  const { title, documentTitle, description } = describe(data, league);
   const og = playerOgImage(data, league);
   return {
-    title: { absolute: `${title} | Rupture Report` },
+    title: { absolute: documentTitle },
     description,
     alternates: { canonical },
     openGraph: {
@@ -150,6 +139,17 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
   if (!data) notFound();
   const { player, injuries, lastModified } = data;
   const { title, description } = describe(data, league);
+  const faq = playerFaq(data, league);
+  let related: PlayerListItem[] = [];
+  let currentSeason: number | null = null;
+  try {
+    [related, currentSeason] = await Promise.all([
+      getInjuredPlayersList(league),
+      getSeasonInfo(league).then((i) => i.current),
+    ]);
+  } catch {
+    related = [];
+  }
   const url = `${siteUrl}${playerPath(league, player.slug)}`;
   const bio = bioLine(player);
   const [tp, ts] = teamColors(player.team?.abbreviation ?? null, league);
@@ -243,6 +243,20 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
           { "@type": "ListItem", position: nba ? 4 : 3, name: player.fullName, item: url },
         ],
       },
+      ...(faq.length
+        ? [
+            {
+              "@type": "FAQPage",
+              "@id": `${url}#faq`,
+              isPartOf: { "@id": `${url}#webpage` },
+              mainEntity: faq.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            },
+          ]
+        : []),
     ],
   };
 
@@ -387,6 +401,31 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
           )}
         </div>
       )}
+      {faq.length > 0 && (
+        <section aria-labelledby="player-faq" className="mt-14" data-player-faq>
+          <h2 id="player-faq" className="border-l-4 pl-3 text-lg font-semibold" style={{ borderLeftColor: "var(--accent)" }}>
+            {player.fullName} injury FAQ
+          </h2>
+          <dl className="mt-4 divide-y divide-border rounded-xl border border-border bg-surface">
+            {faq.map((f) => (
+              <div key={f.q} className="p-4 sm:p-5">
+                <dt className="font-semibold">{f.q}</dt>
+                <dd className="mt-1.5 text-sm text-muted">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+      <RelatedPlayers
+        league={league}
+        slug={player.slug}
+        teamAbbr={player.team?.abbreviation ?? null}
+        teamName={player.team?.name ?? null}
+        injuryType={injuries[0]?.injuryType ?? null}
+        season={injuries[0]?.season ?? null}
+        currentSeason={currentSeason}
+        players={related}
+      />
       </div>
     </>
   );

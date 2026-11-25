@@ -47,6 +47,8 @@ export interface LeagueStats {
   repeats: { name: string; slug: string; team: string | null; note: string }[];
   busiest: { teams: string[]; total: number; acl: number; achilles: number } | null;
   carryover: { count: number; label: string };
+  /** Every player counted in these stats (for name links to player pages). */
+  players: { name: string; slug: string; type: string }[];
   updated: string | null;
 }
 
@@ -282,6 +284,7 @@ export function computeLeagueStats(
     repeats,
     busiest,
     carryover: { count: carryCount, label: "" },
+    players: [...new Map(rows.map((r) => [r.slug, { name: r.name, slug: r.slug, type: r.injuryType === "other" ? "Major" : r.injuryType }])).values()],
     updated,
   };
 }
