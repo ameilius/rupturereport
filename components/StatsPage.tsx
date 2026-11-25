@@ -2,6 +2,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { getLeagueStats, type LeagueStats, type SeriesBucket, type Split } from "@/lib/stats";
 import { cfg, homePath, playerPath, statsPath, type League } from "@/lib/leagues";
+import CopyText from "@/components/CopyText";
+import { EMBED_H, EMBED_W, embedPath, embedSnippet } from "@/lib/embed";
 import { breadcrumbJsonLd, datasetJsonLd, SITE_URL } from "@/lib/structured-data";
 import { formatDate } from "@/lib/format";
 import { CountUp } from "@/components/StatStrip";
@@ -153,6 +155,8 @@ export default async function StatsPage({ league }: { league: League }) {
   const diag = s.stages.find((x) => x.stage === "diagnosis")?.count ?? 0;
   const longest = s.surgery.length > 1 ? s.surgery[s.surgery.length - 1] : null;
   const sm = s.medianDaysToSurgery;
+  const updatedLabel = s.updated ? formatDate(s.updated.slice(0, 10)) : null;
+  const citation = `Source: Rupture Report, ${league} ACL & Achilles Tear Tracker, ${s.label} season, ${url}${updatedLabel ? ` (updated ${updatedLabel})` : ""}.`;
 
   return (
     <>
@@ -342,6 +346,26 @@ export default async function StatsPage({ league }: { league: League }) {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="st-card st-c6" aria-labelledby="cite-data" data-cite>
+          <h2 id="cite-data" className="st-h2">Cite this data</h2>
+          <p className="st-sub mt-1.5">Using these numbers? Please credit and link Rupture Report.</p>
+          <CopyText text={citation} label="Copy citation" event="copy_citation" />
+        </section>
+
+        <section className="st-card st-c6" aria-labelledby="embed-data" data-embed>
+          <h2 id="embed-data" className="st-h2">Embed this</h2>
+          <p className="st-sub mt-1.5">A live {league} tear-count card for your site. Updates automatically.</p>
+          <iframe
+            src={embedPath(league)}
+            width={EMBED_W}
+            height={EMBED_H}
+            title={`${league} ACL & Achilles tear count preview`}
+            loading="lazy"
+            className="mt-3 block max-w-full rounded-[14px] border-0"
+          />
+          <CopyText text={embedSnippet(league)} label="Copy embed code" event="copy_embed" multiline />
         </section>
 
         {s.players.length > 0 && (
