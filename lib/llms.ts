@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/format";
+import { formatDate, formatUpdatedET } from "@/lib/format";
 import { injurySentence, trackerFaq, trackerRowFacts } from "@/lib/summaries";
 import { DATA_LICENSE_URL, SITE_NAME, SITE_URL, TERMS_URL } from "@/lib/structured-data";
 import { computeStats, getCarryover, getTrackerRows } from "@/lib/tracker";
@@ -29,7 +29,7 @@ function totalsLine(d: LeagueData): string {
   const { stats: s, carry, label, league, updated } = d;
   const nba = league === "NBA";
   return (
-    `${label} season totals (computed live${updated ? `, data last updated ${formatDate(updated)}` : ""}): ${s.total} tracked tears — ${s.acl} ACL and ${s.achilles} Achilles.` +
+    `${label} season totals (computed live${updated ? `, data last updated ${formatUpdatedET(updated)}` : ""}): ${s.total} tracked tears — ${s.acl} ACL and ${s.achilles} Achilles.` +
     (nba
       ? s.total
         ? ` ${s.inGame} happened in games; ${s.total - s.inGame} in practices, workouts or other non-game settings.`

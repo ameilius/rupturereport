@@ -7,7 +7,7 @@ import SurfaceBreakdown from "@/components/SurfaceBreakdown";
 import PositionBreakdown from "@/components/PositionBreakdown";
 import SeasonSwitcher from "@/components/SeasonSwitcher";
 import { datasetJsonLd, SITE_URL, X_PROFILE_URL } from "@/lib/structured-data";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatUpdatedET } from "@/lib/format";
 import { trackerFaq } from "@/lib/summaries";
 import { computeStats, getCarryover, getTrackerRows, weeklySeries, type TrackerRow } from "@/lib/tracker";
 import { LEAGUE, isCarryoverOnly, type SeasonInfo } from "@/lib/seasons";
@@ -73,7 +73,7 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
           </span>
           {extra?.updated && (
             <span className="rounded-full border border-border bg-surface/80 px-2.5 py-0.5 text-[11px] text-muted">
-              Updated <time dateTime={extra.updated}>{formatDate(extra.updated)}</time>
+              Updated <time dateTime={extra.updated}>{formatUpdatedET(extra.updated)}</time>
             </span>
           )}
         </div>
@@ -203,7 +203,7 @@ export default async function SeasonHub({ season, info, league = "NFL" }: { seas
           <> {carry.prevReturnedPlayers} of {carry.prevPlayers} players from the {seasonLabel(league, carry.prevSeason)} season are back on the {LEAGUE_CONFIG[league].returnPlace}.</>
         )}
         {lastModified && (
-          <> Last updated <time dateTime={lastModified}>{formatDate(lastModified)}</time>.</>
+          <> Last updated <time dateTime={lastModified}>{formatUpdatedET(lastModified)}</time>.</>
         )}
       </p>
       <StatStrip stats={stats} />

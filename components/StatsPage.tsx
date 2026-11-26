@@ -5,7 +5,7 @@ import { cfg, homePath, playerPath, statsPath, type League } from "@/lib/leagues
 import CopyText from "@/components/CopyText";
 import { EMBED_H, EMBED_W, embedPath, embedSnippet } from "@/lib/embed";
 import { breadcrumbJsonLd, datasetJsonLd, SITE_URL } from "@/lib/structured-data";
-import { formatDate } from "@/lib/format";
+import { formatUpdatedET } from "@/lib/format";
 import { CountUp } from "@/components/StatStrip";
 import TrackEvent from "@/components/TrackEvent";
 
@@ -155,7 +155,7 @@ export default async function StatsPage({ league }: { league: League }) {
   const diag = s.stages.find((x) => x.stage === "diagnosis")?.count ?? 0;
   const longest = s.surgery.length > 1 ? s.surgery[s.surgery.length - 1] : null;
   const sm = s.medianDaysToSurgery;
-  const updatedLabel = s.updated ? formatDate(s.updated.slice(0, 10)) : null;
+  const updatedLabel = s.updated ? formatUpdatedET(s.updated) : null;
   const citation = `Source: Rupture Report, ${league} ACL & Achilles Tear Tracker, ${s.label} season, ${url}${updatedLabel ? ` (updated ${updatedLabel})` : ""}.`;
 
   return (
@@ -388,7 +388,7 @@ export default async function StatsPage({ league }: { league: League }) {
       </div>
 
       <p className="st-sub mt-[18px]">
-        {s.updated ? `Data as of ${formatDate(s.updated.slice(0, 10))}` : "Live data"} · {league} {s.label} only. Carryovers from earlier seasons are excluded
+        {s.updated ? `Data as of ${formatUpdatedET(s.updated)}` : "Live data"} · {league} {s.label} only. Carryovers from earlier seasons are excluded
         {s.carryover.count ? ` (${s.carryover.count} player${s.carryover.count === 1 ? "" : "s"} from ${s.carryover.label} still in recovery)` : ""}.
       </p>
     </>

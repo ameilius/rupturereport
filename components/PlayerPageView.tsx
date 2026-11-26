@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { PlayerAvatar, TeamLogo } from "@/components/TeamImages";
-import { bioLine, formatDate, humanize } from "@/lib/format";
+import { bioLine, formatDate, humanize, formatUpdatedET } from "@/lib/format";
 import {
   STAGE_LABELS,
   formatInjuryType,
@@ -332,7 +332,7 @@ async function PlayerContent({ params, league = "NFL" }: Props) {
           {lastModified && (
             <p className="text-sm text-text/70">
               Last updated{" "}
-              <time dateTime={lastModified}>{formatDate(lastModified)}</time>
+              <time dateTime={lastModified}>{formatUpdatedET(lastModified)}</time>
             </p>
           )}
           <TrackEvent

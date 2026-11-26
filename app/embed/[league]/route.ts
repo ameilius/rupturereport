@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { formatDate } from "@/lib/format";
+import { formatUpdatedET } from "@/lib/format";
 import { homePath, type League } from "@/lib/leagues";
 import { EMBED_H, SITE, embedData } from "@/lib/embed";
 
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ leag
   let status = 200;
   try {
     const d = await embedData(league);
-    const updated = formatDate(d.updated);
+    const updated = formatUpdatedET(d.updated);
     const kpi = (n: number, label: string, color: string) =>
       `<div class="k"><b style="color:${color}">${n}</b><span>${esc(label)}</span></div>`;
     body = `<div class="card">

@@ -30,3 +30,14 @@ export function bioLine(p: { heightIn: number | null; weightLb: number | null; d
   }
   return parts.length ? parts.join(" · ") : null;
 }
+
+/**
+ * Display date for a data-change TIMESTAMP (e.g. lastModified), in US Eastern time with an "ET" label,
+ * e.g. "Nov 24, 2026 ET". Not for date-only fields (injury/update dates), which stay in formatDate (UTC).
+ */
+export function formatUpdatedET(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return `${d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "America/New_York" })} ET`;
+}

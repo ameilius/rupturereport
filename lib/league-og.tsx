@@ -8,7 +8,7 @@ import { getTrackerRows } from "@/lib/tracker";
 import { getLeagueStats } from "@/lib/stats";
 import { leagueOgVersion } from "@/lib/og";
 import { seasonLabel, type League } from "@/lib/leagues";
-import { formatDate } from "@/lib/format";
+import { formatUpdatedET } from "@/lib/format";
 
 export interface LeagueSummary {
   season: number;
@@ -148,7 +148,7 @@ export async function leagueOgResponse(league: League, kind: "hub" | "stats") {
             <div style={{ display: "flex" }} />
           )}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: 26, color: MUTED }}>
-            {s?.updated ? <div style={{ display: "flex", fontSize: 22, marginBottom: 6 }}>{`Updated ${formatDate(s.updated)}`}</div> : null}
+            {s?.updated ? <div style={{ display: "flex", fontSize: 22, marginBottom: 6 }}>{`Updated ${formatUpdatedET(s.updated)}`}</div> : null}
             <div style={{ display: "flex" }}>{path}</div>
           </div>
         </div>
